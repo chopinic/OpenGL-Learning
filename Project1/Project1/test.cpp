@@ -365,5 +365,7 @@ int WINAPI WinMain(HINSTANCE	hInstance,				// 当前窗口实例
 int main()
 {
 	InitGL();
+	WinMain(hInstance,NULL,	0,	0);
+
 }
 
