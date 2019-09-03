@@ -1,3 +1,5 @@
 ﻿  test.cpp
-\\Mac\Home\Documents\GitHub\OpenGL-test\Project1\Project1\test.cpp(255,3): warning C4838:  从“int”转换到“BYTE”需要收缩转换
-  Project1.vcxproj -> \\Mac\Home\Documents\GitHub\OpenGL-test\Project1\Debug\Project1.exe
+\\Mac\Home\Documents\GitHub\OpenGL-test\Project1\Project1\test.cpp(354,3): warning C4838:  从“int”转换到“BYTE”需要收缩转换
+test.obj : error LNK2019: 无法解析的外部符号 _auxDIBImageLoadA@4，该符号在函数 "struct _AUX_RGBImageRec * __cdecl LoadBMP(char const *)" (?LoadBMP@@YAPAU_AUX_RGBImageRec@@PBD@Z) 中被引用
+MSVCRTD.lib(exe_main.obj) : error LNK2019: 无法解析的外部符号 _main，该符号在函数 "int __cdecl invoke_main(void)" (?invoke_main@@YAHXZ) 中被引用
+\\Mac\Home\Documents\GitHub\OpenGL-test\Project1\Debug\Project1.exe : fatal error LNK1120: 2 个无法解析的外部命令
