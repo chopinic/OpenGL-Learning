@@ -1,5 +1,3 @@
-﻿  glad.c
-  test.cpp
-  LINK : 没有找到 \\Mac\Home\Documents\GitHub\OpenGL-test\Project1\Debug\Project1.exe 或上一个增量链接没有生成它；正在执行完全链接
-LINK : warning LNK4098: 默认库“MSVCRT”与其他库的使用冲突；请使用 /NODEFAULTLIB:library
+﻿  test.cpp
+\\Mac\Home\Documents\GitHub\OpenGL-test\Project1\Project1\test.cpp(179,3): warning C4838:  从“int”转换到“BYTE”需要收缩转换
   Project1.vcxproj -> \\Mac\Home\Documents\GitHub\OpenGL-test\Project1\Debug\Project1.exe
