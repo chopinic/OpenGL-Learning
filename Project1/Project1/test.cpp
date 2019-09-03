@@ -48,7 +48,20 @@ int DrawGLScene(GLvoid)								// 从这里开始进行所有的绘制
 {
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);			// 清除屏幕和深度缓存
 	glLoadIdentity();							// 重置当前的模型观察矩阵
-	return TRUE;								//  一切 OK
+	glTranslatef(-1.5f,0.0f,-6.0f);						// 左移 1.5 单位，并移入屏幕 6.0
+	glBegin(GL_TRIANGLES);							// 绘制三角形
+	glVertex3f(0.0f, 1.0f, 0.0f);					// 上顶点
+	glVertex3f(-1.0f, -1.0f, 0.0f);					// 左下
+	glVertex3f(1.0f, -1.0f, 0.0f);					// 右下
+	glEnd();								// 三角形绘制结束
+	glTranslatef(3.0f, 0.0f, 0.0f);						// 右移3单位
+	glBegin(GL_QUADS);							//  绘制正方形
+	glVertex3f(-1.0f, 1.0f, 0.0f);					// 左上
+	glVertex3f(1.0f, 1.0f, 0.0f);					// 右上
+	glVertex3f(1.0f, -1.0f, 0.0f);					// 左下
+	glVertex3f(-1.0f, -1.0f, 0.0f);					// 右下
+	glEnd();								// 正方形绘制结束
+	return TRUE;
 }
 GLvoid KillGLWindow(GLvoid)							// 正常销毁窗口
 {
@@ -338,7 +351,7 @@ int WINAPI WinMain(HINSTANCE	hInstance,				// 当前窗口实例
 				KillGLWindow();					// 销毁当前的窗口
 				fullscreen = !fullscreen;				// 切换 全屏 / 窗口 模式
 				// 重建 OpenGL 窗口
-				if (!CreateGLWindow("NeHe's OpenGL 程序框架", 640, 480, 16, fullscreen))
+				if (!CreateGLWindow("NeHe's OpenGL 第一个图形程序", 640, 480, 16, fullscreen))
 				{
 					return 0;				// 如果窗口未能创建，程序退出
 				}
@@ -351,7 +364,6 @@ int WINAPI WinMain(HINSTANCE	hInstance,				// 当前窗口实例
 }
 int main()
 {
-	
-	
+	InitGL();
 }
 
