@@ -14,6 +14,8 @@ HINSTANCE       hInstance;
 bool	keys[256];								// 保存键盘按键的数组
 bool	active = TRUE;								// 窗口的活动标志，缺省为TRUE
 bool	fullscreen = TRUE;							// 全屏标志缺省，缺省设定成全屏模式
+GLfloat		rtri=5;						// 用于三角形的角度
+GLfloat		rquad=9;						// 用于四边形的角度
 
 LRESULT	CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);				// WndProc的定义
 GLvoid ReSizeGLScene(GLsizei width, GLsizei height)				// 重置OpenGL窗口大小
@@ -44,25 +46,86 @@ int InitGL(GLvoid)								// 此处开始对OpenGL进行所有设置
 	return TRUE;								// 初始化 OK
 }
 
+
+
+
 int DrawGLScene(GLvoid)								// 从这里开始进行所有的绘制
 {
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);			// 清除屏幕和深度缓存
-	glLoadIdentity();							// 重置当前的模型观察矩阵
-	glTranslatef(-1.5f,0.0f,-6.0f);						// 左移 1.5 单位，并移入屏幕 6.0
-	glBegin(GL_TRIANGLES);							// 绘制三角形
-	glVertex3f(0.0f, 1.0f, 0.0f);					// 上顶点
-	glVertex3f(-1.0f, -1.0f, 0.0f);					// 左下
-	glVertex3f(1.0f, -1.0f, 0.0f);					// 右下
-	glEnd();								// 三角形绘制结束
-	glTranslatef(3.0f, 0.0f, 0.0f);						// 右移3单位
-	glBegin(GL_QUADS);							//  绘制正方形
-	glVertex3f(-1.0f, 1.0f, 0.0f);					// 左上
-	glVertex3f(1.0f, 1.0f, 0.0f);					// 右上
-	glVertex3f(1.0f, -1.0f, 0.0f);					// 左下
-	glVertex3f(-1.0f, -1.0f, 0.0f);					// 右下
-	glEnd();								// 正方形绘制结束
-	return TRUE;
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);	// 清除屏幕及深度缓存
+	glLoadIdentity();					// 重置模型观察矩阵
+	glTranslatef(-1.5f, 0.0f, -6.0f);				// 左移 1.5 单位，并移入屏幕 6.0
+
+	glRotatef(rtri, 0.0f, 1.0f, 0.0f);				// 绕Y轴旋转金字塔
+
+	glBegin(GL_TRIANGLES);					// 开始绘制金字塔的各个面
+	glColor3f(1.0f, 0.0f, 0.0f);			// 红色
+	glVertex3f(0.0f, 1.0f, 0.0f);			// 三角形的上顶点 (前侧面)
+	glColor3f(0.0f, 1.0f, 0.0f);			// 绿色
+	glVertex3f(-1.0f, -1.0f, 1.0f);			// 三角形的左下顶点 (前侧面)
+	glColor3f(0.0f, 0.0f, 1.0f);			// 蓝色
+	glVertex3f(1.0f, -1.0f, 1.0f);			// 三角形的右下顶点 (前侧面)
+	glColor3f(1.0f, 0.0f, 0.0f);			// 红色
+	glVertex3f(0.0f, 1.0f, 0.0f);			// 三角形的上顶点 (右侧面)
+	glColor3f(0.0f, 0.0f, 1.0f);			// 蓝色
+	glVertex3f(1.0f, -1.0f, 1.0f);			// 三角形的左下顶点 (右侧面)
+	glColor3f(0.0f, 1.0f, 0.0f);			// 绿色
+	glVertex3f(1.0f, -1.0f, -1.0f);			// 三角形的右下顶点 (右侧面)
+	glColor3f(1.0f, 0.0f, 0.0f);			// 红色
+	glVertex3f(0.0f, 1.0f, 0.0f);			// 三角形的上顶点 (后侧面)
+	glColor3f(0.0f, 1.0f, 0.0f);			// 绿色
+	glVertex3f(1.0f, -1.0f, -1.0f);			// 三角形的左下顶点 (后侧面)
+	glColor3f(0.0f, 0.0f, 1.0f);			// 蓝色
+	glVertex3f(-1.0f, -1.0f, -1.0f);			// 三角形的右下顶点 (后侧面)
+	glColor3f(1.0f, 0.0f, 0.0f);			// 红色
+	glVertex3f(0.0f, 1.0f, 0.0f);			// 三角形的上顶点 (左侧面)
+	glColor3f(0.0f, 0.0f, 1.0f);			// 蓝色
+	glVertex3f(-1.0f, -1.0f, -1.0f);			// 三角形的左下顶点 (左侧面)
+	glColor3f(0.0f, 1.0f, 0.0f);			// 绿色
+	glVertex3f(-1.0f, -1.0f, 1.0f);			// 三角形的右下顶点 (左侧面)
+	glEnd();						// 金字塔绘制结束
+
+	glLoadIdentity();
+	glTranslatef(1.5f, 0.0f, -7.0f);				// 先右移再移入屏幕
+	glRotatef(rquad, 1.0f, 1.0f, 1.0f);			// 在XYZ轴上旋转立方体
+	glBegin(GL_QUADS);					// 开始绘制立方体
+	glColor3f(0.0f, 1.0f, 0.0f);			// 颜色改为蓝色
+	glVertex3f(1.0f, 1.0f, -1.0f);			// 四边形的右上顶点 (顶面)
+	glVertex3f(-1.0f, 1.0f, -1.0f);			// 四边形的左上顶点 (顶面)
+	glVertex3f(-1.0f, 1.0f, 1.0f);			// 四边形的左下顶点 (顶面)
+	glVertex3f(1.0f, 1.0f, 1.0f);			// 四边形的右下顶点 (顶面)
+	glColor3f(1.0f, 0.5f, 0.0f);			// 颜色改成橙色
+	glVertex3f(1.0f, -1.0f, 1.0f);			// 四边形的右上顶点(底面)
+	glVertex3f(-1.0f, -1.0f, 1.0f);			// 四边形的左上顶点(底面)
+	glVertex3f(-1.0f, -1.0f, -1.0f);			// 四边形的左下顶点(底面)
+	glVertex3f(1.0f, -1.0f, -1.0f);			// 四边形的右下顶点(底面)
+	glColor3f(1.0f, 0.0f, 0.0f);			// 颜色改成红色
+	glVertex3f(1.0f, -1.0f, -1.0f);			// 四边形的右上顶点(后面)
+	glVertex3f(-1.0f, -1.0f, -1.0f);			// 四边形的左上顶点(后面)
+	glVertex3f(-1.0f, 1.0f, -1.0f);			// 四边形的左下顶点(后面)
+	glVertex3f(1.0f, 1.0f, -1.0f);			// 四边形的右下顶点(后面)
+	glColor3f(1.0f, 1.0f, 0.0f);			// 颜色改成黄色
+	
+	glVertex3f(1.0f, 1.0f, 1.0f);			// 四边形的右上顶点(前面)
+	glVertex3f(-1.0f, 1.0f, 1.0f);			// 四边形的左上顶点(前面)
+	glVertex3f(-1.0f, -1.0f, 1.0f);			// 四边形的左下顶点(前面)
+	glVertex3f(1.0f, -1.0f, 1.0f);			// 四边形的右下顶点(前面)
+	glColor3f(0.0f, 0.0f, 1.0f);			// 颜色改成蓝色
+	glVertex3f(-1.0f, 1.0f, 1.0f);			// 四边形的右上顶点(左面)
+	glVertex3f(-1.0f, 1.0f, -1.0f);			// 四边形的左上顶点(左面)
+	glVertex3f(-1.0f, -1.0f, -1.0f);			// 四边形的左下顶点(左面)
+	glVertex3f(-1.0f, -1.0f, 1.0f);			// 四边形的右下顶点(左面)
+	glColor3f(1.0f, 0.0f, 1.0f);			// 颜色改成紫罗兰色
+	glVertex3f(1.0f, 1.0f, -1.0f);			// 四边形的右上顶点(右面)
+	glVertex3f(1.0f, 1.0f, 1.0f);			// 四边形的左上顶点(右面)
+	glVertex3f(1.0f, -1.0f, 1.0f);			// 四边形的左下顶点(右面)
+	glVertex3f(1.0f, -1.0f, -1.0f);			// 四边形的右下顶点(右面)
+	glEnd();						// 立方体绘制结束
+
+	rtri += 0.2f;						// 增加三角形的旋转变量
+	rquad -= 0.15f;						// 减少四边形的旋转变量
+	return TRUE;						// 继续运行
 }
+
 GLvoid KillGLWindow(GLvoid)							// 正常销毁窗口
 {
 	if (fullscreen)								// 我们处于全屏模式吗?
@@ -365,7 +428,8 @@ int WINAPI WinMain(HINSTANCE	hInstance,				// 当前窗口实例
 int main()
 {
 	InitGL();
-	WinMain(hInstance,NULL,	0,	0);
+	WinMain(hInstance,NULL,0,0);
+
 
 }
 
