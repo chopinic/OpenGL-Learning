@@ -11,6 +11,7 @@
 #include <gl.h>			// Header File For The OpenGL32 Library
 #include <glu.h>			// Header File For The GLu32 Library
 #include <glaux.h>		// Header File For The Glaux Library
+#pragma comment(lib, "legacy_stdio_definitions.lib")
 
 HDC			hDC = NULL;		// Private GDI Device Context
 HGLRC		hRC = NULL;		// Permanent Rendering Context
@@ -593,4 +594,12 @@ int WINAPI WinMain(HINSTANCE	hInstance,			// Instance
 	// Shutdown
 	KillGLWindow();									// Kill The Window
 	return (msg.wParam);							// Exit The Program
+}
+
+int main()
+{
+	InitGL();
+	WinMain(hInstance, NULL, 0, 0);
+
+
 }
