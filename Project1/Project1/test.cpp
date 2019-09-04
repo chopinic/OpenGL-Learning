@@ -5,44 +5,44 @@
  *		If You've Found This Code Useful, Please Let Me Know.
  *		Visit My Site At nehe.gamedev.net
  */
-#include <stdlib.h>
 #include <windows.h>		// Header File For Windows
 #include <stdio.h>			// Header File For Standard Input/Output
-#include <gl.h>			// Header File For The OpenGL32 Library
-#include <glu.h>			// Header File For The GLu32 Library
 #include <glaux.h>		// Header File For The Glaux Library
 #pragma comment(lib, "legacy_stdio_definitions.lib")
 
-HDC			hDC = NULL;		// Private GDI Device Context
-HGLRC		hRC = NULL;		// Permanent Rendering Context
-HWND		hWnd = NULL;		// Holds Our Window Handle
+
+HDC			hDC=NULL;		// Private GDI Device Context
+HGLRC		hRC=NULL;		// Permanent Rendering Context
+HWND		hWnd=NULL;		// Holds Our Window Handle
 HINSTANCE	hInstance;		// Holds The Instance Of The Application
-bool    blend;						// ÊÇ·ñ»ìºÏ?
-bool	bp;						// B ¼ü°´ÏÂÁËÃ´?
+
 bool	keys[256];			// Array Used For The Keyboard Routine
-bool	active = TRUE;		// Window Active Flag Set To TRUE By Default
-bool	fullscreen = TRUE;	// Fullscreen Flag Set To Fullscreen Mode By Default
-bool	light;				// Lighting ON/OFF ( NEW )
-bool	lp;					// L Pressed? ( NEW )
-bool	fp;					// F Pressed? ( NEW )
+bool	active=TRUE;		// Window Active Flag Set To TRUE By Default
+bool	fullscreen=TRUE;	// Fullscreen Flag Set To Fullscreen Mode By Default
 
+bool	twinkle;			// Twinkling Stars
+bool	tp;					// 'T' Key Pressed?
 
+const int	num=50;				// Number Of Stars To Draw
 
-GLuint	filter;									// ÂË²¨ÀàÐÍ
-GLuint	texture[3];								// 3ÖÖÎÆÀíµÄ´¢´æ¿Õ¼ä
+typedef struct				// Create A Structure For Star
+{
+	int r, g, b;			// Stars Color
+	GLfloat dist,			// Stars Distance From Center
+			angle;			// Stars Current Angle
+}
+stars;
+stars star[num];			// Need To Keep Track Of 'num' Stars
 
-GLfloat	xrot;				// X Rotation
-GLfloat	yrot;				// Y Rotation
-GLfloat xspeed;				// X Rotation Speed
-GLfloat yspeed;				// Y Rotation Speed
-GLfloat	z = -5.0f;			// Depth Into The Screen
+GLfloat	zoom=-15.0f;		// Distance Away From Stars
+GLfloat tilt=90.0f;			// Tilt The View
+GLfloat	spin;				// Spin Stars
 
-GLfloat LightAmbient[] = { 0.5f, 0.5f, 0.5f, 1.0f };
-GLfloat LightDiffuse[] = { 1.0f, 1.0f, 1.0f, 1.0f };
-GLfloat LightPosition[] = { 0.0f, 0.0f, 2.0f, 1.0f };
-
+GLuint	loop;				// General Loop Variable
+GLuint	texture[1];			// Storage For One textures
 
 LRESULT	CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);	// Declaration For WndProc
+
 
 AUX_RGBImageRec* LoadBMP(const char* Filename)				// Loads A Bitmap Image
 {
@@ -64,53 +64,43 @@ AUX_RGBImageRec* LoadBMP(const char* Filename)				// Loads A Bitmap Image
 	return NULL;										// If Load Failed Return NULL
 }
 
-int LoadGLTextures()									// Load Bitmaps And Convert To Textures
+int LoadGLTextures()						// ï¿½ï¿½ï¿½ï¿½Î»Í¼ï¿½ï¿½×ªï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 {
-	int Status = FALSE;									// Status Indicator
+	int Status = FALSE;					// ×´Ì¬Ö¸Ê¾ï¿½ï¿½
 
-	AUX_RGBImageRec* TextureImage[1];					// Create Storage Space For The Texture
+	AUX_RGBImageRec* TextureImage[1];			// Îªï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½æ´¢ï¿½Õ¼ï¿½
 
-	memset(TextureImage, 0, sizeof(void*) * 1);           	// Set The Pointer To NULL
+	memset(TextureImage, 0, sizeof(void*) * 1);		// ï¿½ï¿½Ö¸ï¿½ï¿½ï¿½ï¿½Îª NULL
 
-	// Load The Bitmap, Check For Errors, If Bitmap's Not Found Quit
-	if (TextureImage[0] = LoadBMP("glass.bmp"))
+	// ï¿½ï¿½ï¿½ï¿½Î»Í¼ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Î´ï¿½Òµï¿½Î»Í¼ï¿½Ä¼ï¿½ï¿½ï¿½ï¿½Ë³ï¿½
+	if (TextureImage[0] = LoadBMP("Star.bmp"))
 	{
-		Status = TRUE;									// Set The Status To TRUE
+		Status = TRUE;					// ï¿½ï¿½ Status ï¿½ï¿½ÎªTRUE
 
-		glGenTextures(3, &texture[0]);					// Create Three Textures
+		glGenTextures(1, &texture[0]);			// ï¿½ï¿½ï¿½ï¿½Ò»ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 
-		// Create Nearest Filtered Texture
+		// ï¿½ï¿½ï¿½ï¿½Ò»ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ë²ï¿½ï¿½ï¿½ï¿½ï¿½
 		glBindTexture(GL_TEXTURE_2D, texture[0]);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-		glTexImage2D(GL_TEXTURE_2D, 0, 3, TextureImage[0]->sizeX, TextureImage[0]->sizeY, 0, GL_RGB, GL_UNSIGNED_BYTE, TextureImage[0]->data);
-
-		// Create Linear Filtered Texture
-		glBindTexture(GL_TEXTURE_2D, texture[1]);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 		glTexImage2D(GL_TEXTURE_2D, 0, 3, TextureImage[0]->sizeX, TextureImage[0]->sizeY, 0, GL_RGB, GL_UNSIGNED_BYTE, TextureImage[0]->data);
-
-		// Create MipMapped Texture
-		glBindTexture(GL_TEXTURE_2D, texture[2]);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_NEAREST);
-		gluBuild2DMipmaps(GL_TEXTURE_2D, 3, TextureImage[0]->sizeX, TextureImage[0]->sizeY, GL_RGB, GL_UNSIGNED_BYTE, TextureImage[0]->data);
 	}
 
-	if (TextureImage[0])								// If Texture Exists
+	if (TextureImage[0])					// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 	{
-		if (TextureImage[0]->data)						// If Texture Image Exists
+		if (TextureImage[0]->data)			// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Í¼ï¿½ï¿½ï¿½ï¿½ï¿½
 		{
-			free(TextureImage[0]->data);// Free The Texture Image Memory will not compile in dev
+			free(TextureImage[0]->data);		// ï¿½Í·ï¿½ï¿½ï¿½ï¿½ï¿½Í¼ï¿½ï¿½ï¿½ï¿½Õ¼ï¿½ï¿½ï¿½Ú´ï¿½
 		}
 
-		free(TextureImage[0]);							// Free The Image Structure
+		free(TextureImage[0]);				// ï¿½Í·ï¿½Í¼ï¿½ï¿½á¹¹
 	}
 
-	return Status;										// Return The Status
+	return Status;						// ï¿½ï¿½ï¿½ï¿½ Statusï¿½ï¿½Öµ
 }
 
+
+	
 GLvoid ReSizeGLScene(GLsizei width, GLsizei height)		// Resize And Initialize The GL Window
 {
 	if (height == 0)										// Prevent A Divide By Zero By
@@ -132,82 +122,80 @@ GLvoid ReSizeGLScene(GLsizei width, GLsizei height)		// Resize And Initialize Th
 
 int InitGL(GLvoid)										// All Setup For OpenGL Goes Here
 {
-	if (!LoadGLTextures())								// Jump To Texture Loading Routine
+	if (!LoadGLTextures())					// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 	{
-		return FALSE;									// If Texture Didn't Load Return FALSE
+		return FALSE;					// ï¿½ï¿½ï¿½Î´ï¿½ï¿½ï¿½ï¿½ï¿½ë£¬ï¿½ï¿½ï¿½ï¿½FALSE
 	}
-	glColor4f(1.0f, 1.0f, 1.0f, 0.5f);			// È«ÁÁ¶È£¬ 50% Alpha »ìºÏ
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE);		// »ùÓÚÔ´ÏóËØalphaÍ¨µÀÖµµÄ°ëÍ¸Ã÷»ìºÏº¯Êý
-	glEnable(GL_TEXTURE_2D);							// Enable Texture Mapping
-	glShadeModel(GL_SMOOTH);							// Enable Smooth Shading
-	glClearColor(0.0f, 0.0f, 0.0f, 0.5f);				// Black Background
-	glClearDepth(1.0f);									// Depth Buffer Setup
-	glEnable(GL_DEPTH_TEST);							// Enables Depth Testing
-	glDepthFunc(GL_LEQUAL);								// The Type Of Depth Testing To Do
-	glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);	// Really Nice Perspective Calculations
 
-	glLightfv(GL_LIGHT1, GL_AMBIENT, LightAmbient);		// Setup The Ambient Light
-	glLightfv(GL_LIGHT1, GL_DIFFUSE, LightDiffuse);		// Setup The Diffuse Light
-	glLightfv(GL_LIGHT1, GL_POSITION, LightPosition);	// Position The Light
-	glEnable(GL_LIGHT1);								// Enable Light One
-	return TRUE;										// Initialization Went OK
+	glEnable(GL_TEXTURE_2D);				// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ó³ï¿½ï¿½
+	glShadeModel(GL_SMOOTH);				// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ó°Æ½ï¿½ï¿½
+	glClearColor(0.0f, 0.0f, 0.0f, 0.5f);			// ï¿½ï¿½É«ï¿½ï¿½ï¿½ï¿½
+	glClearDepth(1.0f);					// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½È»ï¿½ï¿½ï¿½
+	glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);	// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ï¸ï¿½ï¿½Í¸ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE);			// ï¿½ï¿½ï¿½Ã»ï¿½É«ï¿½ï¿½ï¿½ï¿½È¡ï¿½Ã°ï¿½Í¸ï¿½ï¿½Ð§ï¿½ï¿½
+	glEnable(GL_BLEND);					// ï¿½ï¿½ï¿½Ã»ï¿½É«
+	for (loop = 0; loop < num; loop++)				// ï¿½ï¿½ï¿½ï¿½Ñ­ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½È«ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+	{
+		star[loop].angle = 0.0f;				// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ç¶ï¿½ï¿½ï¿½ï¿½ï¿½Ç¶È¿ï¿½Ê¼
+		star[loop].dist = (float(loop) / num) * 5.0f;		// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ÄµÄ¾ï¿½ï¿½ï¿½
+		star[loop].r = rand() % 256;			// Îªstar[loop]ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½É«ï¿½ï¿½ï¿½ï¿½
+		star[loop].g = rand() % 256;			// Îªstar[loop]ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½É«ï¿½ï¿½ï¿½ï¿½
+		star[loop].b = rand() % 256;			// Îªstar[loop]ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½É«ï¿½ï¿½ï¿½ï¿½
+	}
+	return TRUE;						// ï¿½ï¿½Ê¼ï¿½ï¿½Ò»ï¿½ï¿½OK
 }
-
-int DrawGLScene(GLvoid)									// Here's Where We Do All The Drawing
+// Initialization Went OK
+int DrawGLScene(GLvoid)						// ï¿½Ë¹ï¿½ï¿½ï¿½ï¿½Ð°ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ÐµÄ»ï¿½ï¿½Æ´ï¿½ï¿½ï¿½
 {
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);	// Clear The Screen And The Depth Buffer
-	glLoadIdentity();									// Reset The View
-	glTranslatef(0.0f, 0.0f, z);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);	// ï¿½ï¿½ï¿½ï¿½ï¿½Ä»ï¿½ï¿½ï¿½ï¿½È»ï¿½ï¿½ï¿½
+	glBindTexture(GL_TEXTURE_2D, texture[0]);		// Ñ¡ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 
-	glRotatef(xrot, 1.0f, 0.0f, 0.0f);
-	glRotatef(yrot, 0.0f, 1.0f, 0.0f);
+	for (loop = 0; loop < num; loop++)				// Ñ­ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ðµï¿½ï¿½ï¿½ï¿½ï¿½
+	{
+		glLoadIdentity();				// ï¿½ï¿½ï¿½ï¿½Ã¿ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ö®Ç°ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä£ï¿½Í¹Û²ï¿½ï¿½ï¿½ï¿½
+		glTranslatef(0.0f, 0.0f, zoom);			// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä»ï¿½ï¿½ï¿½ï¿½
+		glRotatef(tilt, 1.0f, 0.0f, 0.0f);			// ï¿½ï¿½Ð±ï¿½Ó½ï¿½
 
-	glBindTexture(GL_TEXTURE_2D, texture[filter]);
-
-	glBegin(GL_QUADS);
-	// Front Face
-	glNormal3f(0.0f, 0.0f, 1.0f);
-	glTexCoord2f(0.0f, 0.0f); glVertex3f(-1.0f, -1.0f, 1.0f);
-	glTexCoord2f(1.0f, 0.0f); glVertex3f(1.0f, -1.0f, 1.0f);
-	glTexCoord2f(1.0f, 1.0f); glVertex3f(1.0f, 1.0f, 1.0f);
-	glTexCoord2f(0.0f, 1.0f); glVertex3f(-1.0f, 1.0f, 1.0f);
-	// Back Face
-	glNormal3f(0.0f, 0.0f, -1.0f);
-	glTexCoord2f(1.0f, 0.0f); glVertex3f(-1.0f, -1.0f, -1.0f);
-	glTexCoord2f(1.0f, 1.0f); glVertex3f(-1.0f, 1.0f, -1.0f);
-	glTexCoord2f(0.0f, 1.0f); glVertex3f(1.0f, 1.0f, -1.0f);
-	glTexCoord2f(0.0f, 0.0f); glVertex3f(1.0f, -1.0f, -1.0f);
-	// Top Face
-	glNormal3f(0.0f, 1.0f, 0.0f);
-	glTexCoord2f(0.0f, 1.0f); glVertex3f(-1.0f, 1.0f, -1.0f);
-	glTexCoord2f(0.0f, 0.0f); glVertex3f(-1.0f, 1.0f, 1.0f);
-	glTexCoord2f(1.0f, 0.0f); glVertex3f(1.0f, 1.0f, 1.0f);
-	glTexCoord2f(1.0f, 1.0f); glVertex3f(1.0f, 1.0f, -1.0f);
-	// Bottom Face
-	glNormal3f(0.0f, -1.0f, 0.0f);
-	glTexCoord2f(1.0f, 1.0f); glVertex3f(-1.0f, -1.0f, -1.0f);
-	glTexCoord2f(0.0f, 1.0f); glVertex3f(1.0f, -1.0f, -1.0f);
-	glTexCoord2f(0.0f, 0.0f); glVertex3f(1.0f, -1.0f, 1.0f);
-	glTexCoord2f(1.0f, 0.0f); glVertex3f(-1.0f, -1.0f, 1.0f);
-	// Right face
-	glNormal3f(1.0f, 0.0f, 0.0f);
-	glTexCoord2f(1.0f, 0.0f); glVertex3f(1.0f, -1.0f, -1.0f);
-	glTexCoord2f(1.0f, 1.0f); glVertex3f(1.0f, 1.0f, -1.0f);
-	glTexCoord2f(0.0f, 1.0f); glVertex3f(1.0f, 1.0f, 1.0f);
-	glTexCoord2f(0.0f, 0.0f); glVertex3f(1.0f, -1.0f, 1.0f);
-	// Left Face
-	glNormal3f(-1.0f, 0.0f, 0.0f);
-	glTexCoord2f(0.0f, 0.0f); glVertex3f(-1.0f, -1.0f, -1.0f);
-	glTexCoord2f(1.0f, 0.0f); glVertex3f(-1.0f, -1.0f, 1.0f);
-	glTexCoord2f(1.0f, 1.0f); glVertex3f(-1.0f, 1.0f, 1.0f);
-	glTexCoord2f(0.0f, 1.0f); glVertex3f(-1.0f, 1.0f, -1.0f);
-	glEnd();
-
-	xrot += xspeed;
-	yrot += yspeed;
-	return TRUE;										// Keep Going
+		glRotatef(star[loop].angle, 0.0f, 1.0f, 0.0f);	// ï¿½ï¿½×ªï¿½ï¿½ï¿½ï¿½Ç°ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ÇµÄ½Ç¶ï¿½
+		glTranslatef(star[loop].dist, 0.0f, 0.0f);	// ï¿½ï¿½Xï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Æ¶ï¿½
+		glRotatef(-star[loop].angle, 0.0f, 1.0f, 0.0f);	// È¡ï¿½ï¿½ï¿½ï¿½Ç°ï¿½ï¿½ï¿½ÇµÄ½Ç¶ï¿½
+		glRotatef(-tilt, 1.0f, 0.0f, 0.0f);		// È¡ï¿½ï¿½ï¿½ï¿½Ä»ï¿½ï¿½Ð±
+		if (twinkle)					// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ë¸Ð§ï¿½ï¿½
+		{
+			// Ê¹ï¿½ï¿½byteï¿½ï¿½ï¿½ï¿½ÖµÖ¸ï¿½ï¿½Ò»ï¿½ï¿½ï¿½ï¿½É«
+			glColor4ub(star[(num - loop) - 1].r, star[(num - loop) - 1].g, star[(num - loop) - 1].b, 255);
+			glBegin(GL_QUADS);			// ï¿½ï¿½Ê¼ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ó³ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä±ï¿½ï¿½ï¿½
+			glTexCoord2f(0.0f, 0.0f); glVertex3f(-1.0f, -1.0f, 0.0f);
+			glTexCoord2f(1.0f, 0.0f); glVertex3f(1.0f, -1.0f, 0.0f);
+			glTexCoord2f(1.0f, 1.0f); glVertex3f(1.0f, 1.0f, 0.0f);
+			glTexCoord2f(0.0f, 1.0f); glVertex3f(-1.0f, 1.0f, 0.0f);
+			glEnd();				// ï¿½Ä±ï¿½ï¿½Î»ï¿½ï¿½Æ½ï¿½ï¿½ï¿½
+		}
+		glRotatef(spin, 0.0f, 0.0f, 1.0f);			// ï¿½ï¿½zï¿½ï¿½ï¿½ï¿½×ªï¿½ï¿½ï¿½ï¿½
+		// Ê¹ï¿½ï¿½byteï¿½ï¿½ï¿½ï¿½ÖµÖ¸ï¿½ï¿½Ò»ï¿½ï¿½ï¿½ï¿½É«
+		glColor4ub(star[loop].r, star[loop].g, star[loop].b, 255);
+		glBegin(GL_QUADS);				// ï¿½ï¿½Ê¼ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ó³ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä±ï¿½ï¿½ï¿½
+		glTexCoord2f(0.0f, 0.0f); glVertex3f(-1.0f, -1.0f, 0.0f);
+		glTexCoord2f(1.0f, 0.0f); glVertex3f(1.0f, -1.0f, 0.0f);
+		glTexCoord2f(1.0f, 1.0f); glVertex3f(1.0f, 1.0f, 0.0f);
+		glTexCoord2f(0.0f, 1.0f); glVertex3f(-1.0f, 1.0f, 0.0f);
+		glEnd();
+		spin += 0.001f;					// ï¿½ï¿½ï¿½ÇµÄ¹ï¿½×ª
+		star[loop].angle += float(loop) / num;		// ï¿½Ä±ï¿½ï¿½ï¿½ï¿½Çµï¿½ï¿½ï¿½×ªï¿½Ç¶ï¿½
+		star[loop].dist -= 0.001f;				// ï¿½Ä±ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ÄµÄ¾ï¿½ï¿½ï¿½
+		if (spin > 5)
+			spin = 0;
+		
+		if (star[loop].dist < 0.0f)			// ï¿½ï¿½ï¿½Çµï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ã´
+		{
+			star[loop].dist += 5.0f;			// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½5ï¿½ï¿½ï¿½ï¿½Î»
+			star[loop].r = rand() % 256;		// ï¿½ï¿½Ò»ï¿½ï¿½ï¿½Âºï¿½É«ï¿½ï¿½ï¿½ï¿½
+			star[loop].g = rand() % 256;		// ï¿½ï¿½Ò»ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½É«ï¿½ï¿½ï¿½ï¿½
+			star[loop].b = rand() % 256;		// ï¿½ï¿½Ò»ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½É«ï¿½ï¿½ï¿½ï¿½
+		}
+	}
+	return TRUE;						// Ò»ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 }
-
 GLvoid KillGLWindow(GLvoid)								// Properly Kill The Window
 {
 	if (fullscreen)										// Are We In Fullscreen Mode?
@@ -248,14 +236,6 @@ GLvoid KillGLWindow(GLvoid)								// Properly Kill The Window
 		hInstance = NULL;									// Set hInstance To NULL
 	}
 }
-
-/*	This Code Creates Our OpenGL Window.  Parameters Are:					*
- *	title			- Title To Appear At The Top Of The Window				*
- *	width			- Width Of The GL Window Or Fullscreen Mode				*
- *	height			- Height Of The GL Window Or Fullscreen Mode			*
- *	bits			- Number Of Bits To Use For Color (8/16/24/32)			*
- *	fullscreenflag	- Use Fullscreen Mode (TRUE) Or Windowed Mode (FALSE)	*/
-
 BOOL CreateGLWindow(const char* title, int width, int height, int bits, bool fullscreenflag)
 {
 	GLuint		PixelFormat;			// Holds The Results After Searching For A Match
@@ -263,53 +243,53 @@ BOOL CreateGLWindow(const char* title, int width, int height, int bits, bool ful
 	DWORD		dwExStyle;				// Window Extended Style
 	DWORD		dwStyle;				// Window Style
 	RECT		WindowRect;				// Grabs Rectangle Upper Left / Lower Right Values
-	WindowRect.left = (long)0;			// Set Left Value To 0
-	WindowRect.right = (long)width;		// Set Right Value To Requested Width
-	WindowRect.top = (long)0;				// Set Top Value To 0
-	WindowRect.bottom = (long)height;		// Set Bottom Value To Requested Height
+	WindowRect.left=(long)0;			// Set Left Value To 0
+	WindowRect.right=(long)width;		// Set Right Value To Requested Width
+	WindowRect.top=(long)0;				// Set Top Value To 0
+	WindowRect.bottom=(long)height;		// Set Bottom Value To Requested Height
 
-	fullscreen = fullscreenflag;			// Set The Global Fullscreen Flag
+	fullscreen=fullscreenflag;			// Set The Global Fullscreen Flag
 
-	hInstance = GetModuleHandle(NULL);				// Grab An Instance For Our Window
-	wc.style = CS_HREDRAW | CS_VREDRAW | CS_OWNDC;	// Redraw On Size, And Own DC For Window.
-	wc.lpfnWndProc = (WNDPROC)WndProc;					// WndProc Handles Messages
-	wc.cbClsExtra = 0;									// No Extra Window Data
-	wc.cbWndExtra = 0;									// No Extra Window Data
-	wc.hInstance = hInstance;							// Set The Instance
-	wc.hIcon = LoadIcon(NULL, IDI_WINLOGO);			// Load The Default Icon
-	wc.hCursor = LoadCursor(NULL, IDC_ARROW);			// Load The Arrow Pointer
-	wc.hbrBackground = NULL;									// No Background Required For GL
-	wc.lpszMenuName = NULL;									// We Don't Want A Menu
-	wc.lpszClassName = "OpenGL";								// Set The Class Name
+	hInstance			= GetModuleHandle(NULL);				// Grab An Instance For Our Window
+	wc.style			= CS_HREDRAW | CS_VREDRAW | CS_OWNDC;	// Redraw On Size, And Own DC For Window.
+	wc.lpfnWndProc		= (WNDPROC) WndProc;					// WndProc Handles Messages
+	wc.cbClsExtra		= 0;									// No Extra Window Data
+	wc.cbWndExtra		= 0;									// No Extra Window Data
+	wc.hInstance		= hInstance;							// Set The Instance
+	wc.hIcon			= LoadIcon(NULL, IDI_WINLOGO);			// Load The Default Icon
+	wc.hCursor			= LoadCursor(NULL, IDC_ARROW);			// Load The Arrow Pointer
+	wc.hbrBackground	= NULL;									// No Background Required For GL
+	wc.lpszMenuName		= NULL;									// We Don't Want A Menu
+	wc.lpszClassName	= "OpenGL";								// Set The Class Name
 
 	if (!RegisterClass(&wc))									// Attempt To Register The Window Class
 	{
-		MessageBox(NULL, "Failed To Register The Window Class.", "ERROR", MB_OK | MB_ICONEXCLAMATION);
+		MessageBox(NULL,"Failed To Register The Window Class.","ERROR",MB_OK|MB_ICONEXCLAMATION);
 		return FALSE;											// Return FALSE
 	}
-
+	
 	if (fullscreen)												// Attempt Fullscreen Mode?
 	{
 		DEVMODE dmScreenSettings;								// Device Mode
-		memset(&dmScreenSettings, 0, sizeof(dmScreenSettings));	// Makes Sure Memory's Cleared
-		dmScreenSettings.dmSize = sizeof(dmScreenSettings);		// Size Of The Devmode Structure
-		dmScreenSettings.dmPelsWidth = width;				// Selected Screen Width
-		dmScreenSettings.dmPelsHeight = height;				// Selected Screen Height
-		dmScreenSettings.dmBitsPerPel = bits;					// Selected Bits Per Pixel
-		dmScreenSettings.dmFields = DM_BITSPERPEL | DM_PELSWIDTH | DM_PELSHEIGHT;
+		memset(&dmScreenSettings,0,sizeof(dmScreenSettings));	// Makes Sure Memory's Cleared
+		dmScreenSettings.dmSize=sizeof(dmScreenSettings);		// Size Of The Devmode Structure
+		dmScreenSettings.dmPelsWidth	= width;				// Selected Screen Width
+		dmScreenSettings.dmPelsHeight	= height;				// Selected Screen Height
+		dmScreenSettings.dmBitsPerPel	= bits;					// Selected Bits Per Pixel
+		dmScreenSettings.dmFields=DM_BITSPERPEL|DM_PELSWIDTH|DM_PELSHEIGHT;
 
 		// Try To Set Selected Mode And Get Results.  NOTE: CDS_FULLSCREEN Gets Rid Of Start Bar.
-		if (ChangeDisplaySettings(&dmScreenSettings, CDS_FULLSCREEN) != DISP_CHANGE_SUCCESSFUL)
+		if (ChangeDisplaySettings(&dmScreenSettings,CDS_FULLSCREEN)!=DISP_CHANGE_SUCCESSFUL)
 		{
 			// If The Mode Fails, Offer Two Options.  Quit Or Use Windowed Mode.
-			if (MessageBox(NULL, "The Requested Fullscreen Mode Is Not Supported By\nYour Video Card. Use Windowed Mode Instead?", "NeHe GL", MB_YESNO | MB_ICONEXCLAMATION) == IDYES)
+			if (MessageBox(NULL,"The Requested Fullscreen Mode Is Not Supported By\nYour Video Card. Use Windowed Mode Instead?","NeHe GL",MB_YESNO|MB_ICONEXCLAMATION)==IDYES)
 			{
-				fullscreen = FALSE;		// Windowed Mode Selected.  Fullscreen = FALSE
+				fullscreen=FALSE;		// Windowed Mode Selected.  Fullscreen = FALSE
 			}
 			else
 			{
 				// Pop Up A Message Box Letting User Know The Program Is Closing.
-				MessageBox(NULL, "Program Will Now Close.", "ERROR", MB_OK | MB_ICONSTOP);
+				MessageBox(NULL,"Program Will Now Close.","ERROR",MB_OK|MB_ICONSTOP);
 				return FALSE;									// Return FALSE
 			}
 		}
@@ -317,39 +297,39 @@ BOOL CreateGLWindow(const char* title, int width, int height, int bits, bool ful
 
 	if (fullscreen)												// Are We Still In Fullscreen Mode?
 	{
-		dwExStyle = WS_EX_APPWINDOW;								// Window Extended Style
-		dwStyle = WS_POPUP;										// Windows Style
+		dwExStyle=WS_EX_APPWINDOW;								// Window Extended Style
+		dwStyle=WS_POPUP;										// Windows Style
 		ShowCursor(FALSE);										// Hide Mouse Pointer
 	}
 	else
 	{
-		dwExStyle = WS_EX_APPWINDOW | WS_EX_WINDOWEDGE;			// Window Extended Style
-		dwStyle = WS_OVERLAPPEDWINDOW;							// Windows Style
+		dwExStyle=WS_EX_APPWINDOW | WS_EX_WINDOWEDGE;			// Window Extended Style
+		dwStyle=WS_OVERLAPPEDWINDOW;							// Windows Style
 	}
 
 	AdjustWindowRectEx(&WindowRect, dwStyle, FALSE, dwExStyle);		// Adjust Window To True Requested Size
 
 	// Create The Window
-	if (!(hWnd = CreateWindowEx(dwExStyle,							// Extended Style For The Window
-		"OpenGL",							// Class Name
-		title,								// Window Title
-		dwStyle |							// Defined Window Style
-		WS_CLIPSIBLINGS |					// Required Window Style
-		WS_CLIPCHILDREN,					// Required Window Style
-		0, 0,								// Window Position
-		WindowRect.right - WindowRect.left,	// Calculate Window Width
-		WindowRect.bottom - WindowRect.top,	// Calculate Window Height
-		NULL,								// No Parent Window
-		NULL,								// No Menu
-		hInstance,							// Instance
-		NULL)))								// Dont Pass Anything To WM_CREATE
+	if (!(hWnd=CreateWindowEx(	dwExStyle,							// Extended Style For The Window
+								"OpenGL",							// Class Name
+								title,								// Window Title
+								dwStyle |							// Defined Window Style
+								WS_CLIPSIBLINGS |					// Required Window Style
+								WS_CLIPCHILDREN,					// Required Window Style
+								0, 0,								// Window Position
+								WindowRect.right-WindowRect.left,	// Calculate Window Width
+								WindowRect.bottom-WindowRect.top,	// Calculate Window Height
+								NULL,								// No Parent Window
+								NULL,								// No Menu
+								hInstance,							// Instance
+								NULL)))								// Dont Pass Anything To WM_CREATE
 	{
 		KillGLWindow();								// Reset The Display
-		MessageBox(NULL, "Window Creation Error.", "ERROR", MB_OK | MB_ICONEXCLAMATION);
+		MessageBox(NULL,"Window Creation Error.","ERROR",MB_OK|MB_ICONEXCLAMATION);
 		return FALSE;								// Return FALSE
 	}
 
-	static	PIXELFORMATDESCRIPTOR pfd =				// pfd Tells Windows How We Want Things To Be
+	static	PIXELFORMATDESCRIPTOR pfd=				// pfd Tells Windows How We Want Things To Be
 	{
 		sizeof(PIXELFORMATDESCRIPTOR),				// Size Of This Pixel Format Descriptor
 		1,											// Version Number
@@ -370,43 +350,43 @@ BOOL CreateGLWindow(const char* title, int width, int height, int bits, bool ful
 		0,											// Reserved
 		0, 0, 0										// Layer Masks Ignored
 	};
-
-	if (!(hDC = GetDC(hWnd)))							// Did We Get A Device Context?
+	
+	if (!(hDC=GetDC(hWnd)))							// Did We Get A Device Context?
 	{
 		KillGLWindow();								// Reset The Display
-		MessageBox(NULL, "Can't Create A GL Device Context.", "ERROR", MB_OK | MB_ICONEXCLAMATION);
+		MessageBox(NULL,"Can't Create A GL Device Context.","ERROR",MB_OK|MB_ICONEXCLAMATION);
 		return FALSE;								// Return FALSE
 	}
 
-	if (!(PixelFormat = ChoosePixelFormat(hDC, &pfd)))	// Did Windows Find A Matching Pixel Format?
+	if (!(PixelFormat=ChoosePixelFormat(hDC,&pfd)))	// Did Windows Find A Matching Pixel Format?
 	{
 		KillGLWindow();								// Reset The Display
-		MessageBox(NULL, "Can't Find A Suitable PixelFormat.", "ERROR", MB_OK | MB_ICONEXCLAMATION);
+		MessageBox(NULL,"Can't Find A Suitable PixelFormat.","ERROR",MB_OK|MB_ICONEXCLAMATION);
 		return FALSE;								// Return FALSE
 	}
 
-	if (!SetPixelFormat(hDC, PixelFormat, &pfd))		// Are We Able To Set The Pixel Format?
+	if(!SetPixelFormat(hDC,PixelFormat,&pfd))		// Are We Able To Set The Pixel Format?
 	{
 		KillGLWindow();								// Reset The Display
-		MessageBox(NULL, "Can't Set The PixelFormat.", "ERROR", MB_OK | MB_ICONEXCLAMATION);
+		MessageBox(NULL,"Can't Set The PixelFormat.","ERROR",MB_OK|MB_ICONEXCLAMATION);
 		return FALSE;								// Return FALSE
 	}
 
-	if (!(hRC = wglCreateContext(hDC)))				// Are We Able To Get A Rendering Context?
+	if (!(hRC=wglCreateContext(hDC)))				// Are We Able To Get A Rendering Context?
 	{
 		KillGLWindow();								// Reset The Display
-		MessageBox(NULL, "Can't Create A GL Rendering Context.", "ERROR", MB_OK | MB_ICONEXCLAMATION);
+		MessageBox(NULL,"Can't Create A GL Rendering Context.","ERROR",MB_OK|MB_ICONEXCLAMATION);
 		return FALSE;								// Return FALSE
 	}
 
-	if (!wglMakeCurrent(hDC, hRC))					// Try To Activate The Rendering Context
+	if(!wglMakeCurrent(hDC,hRC))					// Try To Activate The Rendering Context
 	{
 		KillGLWindow();								// Reset The Display
-		MessageBox(NULL, "Can't Activate The GL Rendering Context.", "ERROR", MB_OK | MB_ICONEXCLAMATION);
+		MessageBox(NULL,"Can't Activate The GL Rendering Context.","ERROR",MB_OK|MB_ICONEXCLAMATION);
 		return FALSE;								// Return FALSE
 	}
 
-	ShowWindow(hWnd, SW_SHOW);						// Show The Window
+	ShowWindow(hWnd,SW_SHOW);						// Show The Window
 	SetForegroundWindow(hWnd);						// Slightly Higher Priority
 	SetFocus(hWnd);									// Sets Keyboard Focus To The Window
 	ReSizeGLScene(width, height);					// Set Up Our Perspective GL Screen
@@ -414,7 +394,7 @@ BOOL CreateGLWindow(const char* title, int width, int height, int bits, bool ful
 	if (!InitGL())									// Initialize Our Newly Created GL Window
 	{
 		KillGLWindow();								// Reset The Display
-		MessageBox(NULL, "Initialization Failed.", "ERROR", MB_OK | MB_ICONEXCLAMATION);
+		MessageBox(NULL,"Initialization Failed.","ERROR",MB_OK|MB_ICONEXCLAMATION);
 		return FALSE;								// Return FALSE
 	}
 
@@ -525,81 +505,36 @@ int WINAPI WinMain(HINSTANCE	hInstance,			// Instance
 			}
 			else									// Not Time To Quit, Update Screen
 			{
-				SwapBuffers(hDC);					// Swap Buffers (Double Buffering)
-				if (keys['B'] && !bp)				// B ½¡°´ÏÂÇÒbpÎª FALSEÃ´?
-	{
-		bp=TRUE;				// ÈôÊÇ£¬ bp ÉèÎª TRUE
-		blend = !blend;				// ÇÐ»»»ìºÏÑ¡ÏîµÄ TRUE / FALSE
-		if(blend)				// »ìºÏ´ò¿ªÁËÃ´?
-		{
-			glEnable(GL_BLEND);		// ´ò¿ª»ìºÏ
-			glDisable(GL_DEPTH_TEST);	// ¹Ø±ÕÉî¶È²âÊÔ
-		}
-		else					// ·ñÔò
-		{
-			glDisable(GL_BLEND);		// ¹Ø±Õ»ìºÏ
-			glEnable(GL_DEPTH_TEST);	// ´ò¿ªÉî¶È²âÊÔ
-		}
-	}
-	if (!keys['B'])					//  B ¼üËÉ¿ªÁËÃ´?
-	{
-		bp=FALSE;				// ÈôÊÇ£¬ bpÉèÎª FALSE
-	}
-				if (keys['L'] && !lp)
+				SwapBuffers(hDC);				// ï¿½Ð»ï¿½ï¿½ï¿½ï¿½ï¿½
+				if (keys['T'] && !tp)				// ï¿½Ç·ï¿½T ï¿½ï¿½ï¿½Ñ°ï¿½ï¿½Â²ï¿½ï¿½ï¿½ tpÖµÎª FALSE
 				{
-					lp = TRUE;
-					light = !light;
-					if (!light)
-					{
-						glDisable(GL_LIGHTING);
-					}
-					else
-					{
-						glEnable(GL_LIGHTING);
-					}
+					tp = TRUE;				// ï¿½ï¿½ï¿½Ç£ï¿½ï¿½ï¿½tpï¿½ï¿½ÎªTRUE
+					twinkle = !twinkle;			// ï¿½ï¿½×ª twinkleï¿½ï¿½Öµ
 				}
-				if (!keys['L'])
+				if (!keys['T'])					// T ï¿½ï¿½ï¿½ï¿½ï¿½É¿ï¿½ï¿½ï¿½Ã´ï¿½ï¿½
 				{
-					lp = FALSE;
+					tp = FALSE;				// ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½tpÎª FALSE
 				}
-				if (keys['F'] && !fp)
+				if (keys[VK_UP])				// ï¿½Ï·ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ã´ï¿½ï¿½
 				{
-					fp = TRUE;
-					filter += 1;
-					if (filter > 2)
-					{
-						filter = 0;
-					}
-				}
-				if (!keys['F'])
-				{
-					fp = FALSE;
-				}
-				if (keys[VK_PRIOR])
-				{
-					z -= 0.02f;
-				}
-				if (keys[VK_NEXT])
-				{
-					z += 0.02f;
-				}
-				if (keys[VK_UP])
-				{
-					xspeed -= 0.001f;
-				}
-				if (keys[VK_DOWN])
-				{
-					xspeed += 0.001f;
-				}
-				if (keys[VK_RIGHT])
-				{
-					yspeed += 0.001f;
-				}
-				if (keys[VK_LEFT])
-				{
-					yspeed -= 0.001f;
+					tilt -= 0.5f;				// ï¿½ï¿½Ä»ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ð±
 				}
 
+				if (keys[VK_DOWN])				// ï¿½Â·ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ã´ï¿½ï¿½
+				{
+					tilt += 0.5f;				// ï¿½ï¿½Ä»ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ð±
+				}
+
+				if (keys[VK_PRIOR])				// ï¿½ï¿½ï¿½Ï·ï¿½Ò³ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ã´
+				{
+					zoom -= 0.2f;				// ï¿½ï¿½Ð¡
+				}
+
+				if (keys[VK_NEXT])				// ï¿½ï¿½ï¿½Â·ï¿½Ò³ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ã´ï¿½ï¿½
+				{
+					zoom += 0.2f;				// ï¿½Å´ï¿½
+				}
+				
 				if (keys[VK_F1])						// Is F1 Being Pressed?
 				{
 					keys[VK_F1] = FALSE;					// If So Make Key FALSE
