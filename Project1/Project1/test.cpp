@@ -17,7 +17,8 @@ HDC			hDC = NULL;		// Private GDI Device Context
 HGLRC		hRC = NULL;		// Permanent Rendering Context
 HWND		hWnd = NULL;		// Holds Our Window Handle
 HINSTANCE	hInstance;		// Holds The Instance Of The Application
-
+bool    blend;						// 是否混合?
+bool	bp;						// B 键按下了么?
 bool	keys[256];			// Array Used For The Keyboard Routine
 bool	active = TRUE;		// Window Active Flag Set To TRUE By Default
 bool	fullscreen = TRUE;	// Fullscreen Flag Set To Fullscreen Mode By Default
@@ -72,7 +73,7 @@ int LoadGLTextures()									// Load Bitmaps And Convert To Textures
 	memset(TextureImage, 0, sizeof(void*) * 1);           	// Set The Pointer To NULL
 
 	// Load The Bitmap, Check For Errors, If Bitmap's Not Found Quit
-	if (TextureImage[0] = LoadBMP("Crate.bmp"))
+	if (TextureImage[0] = LoadBMP("glass.bmp"))
 	{
 		Status = TRUE;									// Set The Status To TRUE
 
@@ -135,7 +136,8 @@ int InitGL(GLvoid)										// All Setup For OpenGL Goes Here
 	{
 		return FALSE;									// If Texture Didn't Load Return FALSE
 	}
-
+	glColor4f(1.0f, 1.0f, 1.0f, 0.5f);			// 全亮度， 50% Alpha 混合
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE);		// 基于源象素alpha通道值的半透明混合函数
 	glEnable(GL_TEXTURE_2D);							// Enable Texture Mapping
 	glShadeModel(GL_SMOOTH);							// Enable Smooth Shading
 	glClearColor(0.0f, 0.0f, 0.0f, 0.5f);				// Black Background
@@ -524,6 +526,25 @@ int WINAPI WinMain(HINSTANCE	hInstance,			// Instance
 			else									// Not Time To Quit, Update Screen
 			{
 				SwapBuffers(hDC);					// Swap Buffers (Double Buffering)
+				if (keys['B'] && !bp)				// B 健按下且bp为 FALSE么?
+	{
+		bp=TRUE;				// 若是， bp 设为 TRUE
+		blend = !blend;				// 切换混合选项的 TRUE / FALSE
+		if(blend)				// 混合打开了么?
+		{
+			glEnable(GL_BLEND);		// 打开混合
+			glDisable(GL_DEPTH_TEST);	// 关闭深度测试
+		}
+		else					// 否则
+		{
+			glDisable(GL_BLEND);		// 关闭混合
+			glEnable(GL_DEPTH_TEST);	// 打开深度测试
+		}
+	}
+	if (!keys['B'])					//  B 键松开了么?
+	{
+		bp=FALSE;				// 若是， bp设为 FALSE
+	}
 				if (keys['L'] && !lp)
 				{
 					lp = TRUE;
