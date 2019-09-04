@@ -69,7 +69,7 @@ int LoadGLTextures()									// Load Bitmaps And Convert To Textures
 	memset(TextureImage, 0, sizeof(void*) * 1);           	// Set The Pointer To NULL
 
 	// Load The Bitmap, Check For Errors, If Bitmap's Not Found Quit
-	if (TextureImage[0] = LoadBMP("Data/Crate.bmp"))
+	if (TextureImage[0] = LoadBMP("Crate.bmp"))
 	{
 		Status = TRUE;									// Set The Status To TRUE
 
@@ -598,7 +598,7 @@ int WINAPI WinMain(HINSTANCE	hInstance,			// Instance
 
 int main()
 {
-	InitGL();
+	//InitGL();
 	WinMain(hInstance, NULL, 0, 0);
 
 
