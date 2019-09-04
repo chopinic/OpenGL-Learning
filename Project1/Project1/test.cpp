@@ -25,6 +25,11 @@ bool	light;				// Lighting ON/OFF ( NEW )
 bool	lp;					// L Pressed? ( NEW )
 bool	fp;					// F Pressed? ( NEW )
 
+
+
+GLuint	filter;									// 滤波类型
+GLuint	texture[3];								// 3种纹理的储存空间
+
 GLfloat	xrot;				// X Rotation
 GLfloat	yrot;				// Y Rotation
 GLfloat xspeed;				// X Rotation Speed
@@ -35,8 +40,6 @@ GLfloat LightAmbient[] = { 0.5f, 0.5f, 0.5f, 1.0f };
 GLfloat LightDiffuse[] = { 1.0f, 1.0f, 1.0f, 1.0f };
 GLfloat LightPosition[] = { 0.0f, 0.0f, 2.0f, 1.0f };
 
-GLuint	filter;				// Which Filter To Use
-GLuint	texture[3];			// Storage For 3 Textures
 
 LRESULT	CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);	// Declaration For WndProc
 
@@ -561,19 +564,19 @@ int WINAPI WinMain(HINSTANCE	hInstance,			// Instance
 				}
 				if (keys[VK_UP])
 				{
-					xspeed -= 0.01f;
+					xspeed -= 0.001f;
 				}
 				if (keys[VK_DOWN])
 				{
-					xspeed += 0.01f;
+					xspeed += 0.001f;
 				}
 				if (keys[VK_RIGHT])
 				{
-					yspeed += 0.01f;
+					yspeed += 0.001f;
 				}
 				if (keys[VK_LEFT])
 				{
-					yspeed -= 0.01f;
+					yspeed -= 0.001f;
 				}
 
 				if (keys[VK_F1])						// Is F1 Being Pressed?
