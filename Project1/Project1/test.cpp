@@ -555,10 +555,10 @@ int WINAPI WinMain(HINSTANCE	hInstance,			// Instance
 	return (msg.wParam);							// Exit The Program
 }
 
-int main()
-{
-	//InitGL();
-	WinMain(hInstance, NULL, 0, 0);
-
-
-}
+//int main()
+//{
+//	//InitGL();
+//	WinMain(hInstance, NULL, 0, 0);
+//
+//
+//}

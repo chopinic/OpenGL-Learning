@@ -1,4 +1,2 @@
-﻿  test.cpp
-  \\Mac\Home\Documents\GitHub\OpenGL-test\Project1\Project1\test.cpp: warning C4819: 该文件包含不能在当前代码页(936)中表示的字符。请将该文件保存为 Unicode 格式以防止数据丢失
-\\Mac\Home\Documents\GitHub\OpenGL-test\Project1\Project1\test.cpp(340,3): warning C4838:  从“int”转换到“BYTE”需要收缩转换
+﻿  learn.cpp
   Project1.vcxproj -> \\Mac\Home\Documents\GitHub\OpenGL-test\Project1\Debug\Project1.exe
