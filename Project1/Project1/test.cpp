@@ -121,7 +121,7 @@ int LoadGLTextures()                                    // Load Bitmaps And Conv
         memset(TextureImage,0,sizeof(void *)*1);        // Set The Pointer To NULL
 
         // Load The Bitmap, Check For Errors, If Bitmap's Not Found Quit
-        if (TextureImage[0]=LoadBMP("Mud.bmp"))
+        if (TextureImage[0]=LoadBMP("code.bmp"))
         {
                 Status=TRUE;                            // Set The Status To TRUE
 
