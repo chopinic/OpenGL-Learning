@@ -585,7 +585,9 @@ int WINAPI WinMain(HINSTANCE	hInstance,			// Instance
 	// Shutdown
 	KillGLWindow();									// Kill The Window
 	return (msg.wParam);							// Exit The Program
-}int main() {
+}
+
+int main() {
 	WinMain(NULL,			// Instance
 		NULL,		// Previous Instance
 		NULL,			// Command Line Parameters
