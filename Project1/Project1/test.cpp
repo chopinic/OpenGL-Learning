@@ -20,7 +20,9 @@ HGLRC		hRC = NULL;		// Permanent Rendering Context
 HWND		hWnd = NULL;		// Holds Our Window Handle
 HINSTANCE	hInstance;		// Holds The Instance Of The Application
 GLfloat d = 0;
-
+GLfloat	dhold = 0;
+bool istp = false;
+bool isshift = true;
 bool	keys[256];			// Array Used For The Keyboard Routine
 bool	active = TRUE;		// Window Active Flag Set To TRUE By Default
 bool	fullscreen = TRUE;	// Fullscreen Flag Set To Fullscreen Mode By Default
@@ -162,10 +164,13 @@ int DrawGLScene(GLvoid)									// Here's Where We Do All The Drawing
 	{
 		for (y = 0; y < 44; y++)
 		{
+			if (isshift)
+				d = 0;
 			float_x = float(x) / 44.0f+d;
 			float_y = float(y) / 44.0f+d;
 			float_xb = float(x + 1) / 44.0f+d;
 			float_yb = float(y + 1) / 44.0f+d;
+
 			if (float_x > 1)float_x -= 1;
 			if (float_xb > 1)float_xb -= 1;
 			if (float_y > 1)float_y -= 1;
@@ -182,56 +187,27 @@ int DrawGLScene(GLvoid)									// Here's Where We Do All The Drawing
 			glTexCoord2f(float_xb, float_y);
 			glVertex3f(points[x + 1][y][0], points[x + 1][y][1], points[x + 1][y][2]);
 		}
+	}
 		
 
-	}
-	/*for (y = 0; y < 44; y++)
-	{
-		x = 43;
-		float_x = float(x) / 44.0f;
-		float_y = float(y) / 44.0f;
-		float_xb = float(x + 1) / 44.0f;
-		float_yb = float(y + 1) / 44.0f;
-
-		glTexCoord2f(float_x, float_y);
-		glVertex3f(points[x + 1][y][0], points[x + 1][y][1], points[x + 1][y][2]);
-
-
-		glTexCoord2f(float_x, float_yb);
-		glVertex3f(points[x + 1][y + 1][0], points[x + 1][y + 1][1], points[x + 1][y + 1][2]);
-
-
-		glTexCoord2f(float_xb, float_yb);
-		glVertex3f(points[x][y + 1][0], points[x][y + 1][1], points[x][y + 1][2]);
-
-		glTexCoord2f(float_xb, float_y);
-		glVertex3f(points[x][y][0], points[x][y][1], points[x][y][2]);
-		glEnd();
-	}*/
-
-	glEnd();
 
 	GLfloat hold1, hold2;
-	if (wiggle_count == 10)
+	if (isshift)
+		if (wiggle_count == 10)
 	{
-		//for (y = 0; y < 45; y++)
-		//{
-		//	hold2 = points[0][y][0];
-		//	//hold1 = points[0][y][1];
-		//	//hold = points[0][y][2];
-		//	for (x = 0; x < 44; x++)
-		//	{
-		//		//points[x][y][2] = points[x + 1][y][2];
-		//		//points[x][y][1] = points[x + 1][y][1];
-		//		points[x][y][0] = points[x + 1][y][0];
-		//	}
-		//	//points[44][y][2] = hold;
-		//	//points[44][y][1] = hold1;
-		//	points[44][y][0] = hold2;
-		//}
+		for (y = 0; y < 45; y++)
+		{
+			hold = points[0][y][2];
+			for (x = 0; x < 44; x++)
+			{
+				points[x][y][2] = points[x + 1][y][2];
+			}
+			points[44][y][2] = hold;
+		}
 		d += 0.01f;
 		wiggle_count = 0;
 	}
+	glEnd();
 
 	wiggle_count++;
 
@@ -560,6 +536,14 @@ int WINAPI WinMain(HINSTANCE	hInstance,			// Instance
 			else									// Not Time To Quit, Update Screen
 			{
 				SwapBuffers(hDC);					// Swap Buffers (Double Buffering)
+				if (keys['T']&&!istp)
+				{
+					isshift = !isshift;
+					istp = true;
+				}
+				if (!keys['T'])
+					istp = false;
+				
 				if (keys['W'])
 					yspeed+=0.01;
 				if (keys['S'])
