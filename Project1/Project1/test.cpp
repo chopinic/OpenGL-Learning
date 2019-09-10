@@ -137,13 +137,18 @@ int DrawGLScene(GLvoid)									// Here's Where We Do All The Drawing
 {
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);	// Clear Screen And Depth Buffer
 	glLoadIdentity();									// Reset The Current Modelview Matrix
-	glTranslatef(0.0f,0.0f,-10.0f);						// Move One Unit Into The Screen
+	glTranslatef(0.0f,0.7f,-10.0f);						// Move One Unit Into The Screen
 	glRotatef(rot,1.0f,0.0f,0.0f);						// Rotate On The X Axis
 	glRotatef(0,0.0f,1.0f,0.0f);					// Rotate On The Y Axis
 	glRotatef(0,0.0f,0.0f,1.0f);					// Rotate On The Z Axis
 	// Pulsing Colors Based On The Rotation
 	glColor3f(1.0f*float(cos(rot/20.0f)),1.0f*float(sin(rot/25.0f)),1.0f-0.5f*float(cos(rot/17.0f)));
- 	glPrint("NeHe - %3.2f",rot);						// Print GL Text To The Screen
+ 	glPrint("TEST - %3.2f",rot);						// Print GL Text To The Screen
+	glLoadIdentity();
+	glTranslatef(0.0f, 0.0f, -10.0f);						// Move One Unit Into The Screen
+
+	glPrint("%3.2f", rot);						// Print GL Text To The Screen
+
 	rot+=0.005f;											// Increase The Rotation Variable
 	return TRUE;										// Everything Went OK
 }
