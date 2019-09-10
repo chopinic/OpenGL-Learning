@@ -1,5 +1,6 @@
 /*
- *		This Code Was Created By bosco / Jeff Molofee 2000
+ *		This Code Was Created By Jeff Molofee 2000
+ *		Modified by Shawn T. to handle (%3.2f, num) parameters.
  *		A HUGE Thanks To Fredric Echols For Cleaning Up
  *		And Optimizing The Base Code, Making It More Flexible!
  *		If You've Found This Code Useful, Please Let Me Know.
@@ -7,10 +8,10 @@
  */
 #define _CRT_SECURE_NO_DEPRECATE
 
-#include <stdlib.h>
 #include <windows.h>		// Header File For Windows
+#include <math.h>			// Header File For Windows Math Library
 #include <stdio.h>			// Header File For Standard Input/Output
-#include <math.h>			// Header File For The Math Library
+#include <stdarg.h>			// Header File For Variable Argument Routines
 #include <gl.h>			// Header File For The OpenGL32 Library
 #include <glu.h>			// Header File For The GLu32 Library
 #include <glaux.h>		// Header File For The Glaux Library
@@ -19,80 +20,78 @@ HDC			hDC = NULL;		// Private GDI Device Context
 HGLRC		hRC = NULL;		// Permanent Rendering Context
 HWND		hWnd = NULL;		// Holds Our Window Handle
 HINSTANCE	hInstance;		// Holds The Instance Of The Application
-GLfloat d = 0;
-GLfloat	dhold = 0;
-bool istp = false;
-bool isshift = true;
+GLYPHMETRICSFLOAT gmf[256];	// Storage For Information About Our Outline Font Characters
+GLfloat	rot;				// Used To Rotate The Text
+GLuint	base;				// Base Display List For The Font Set
+GLfloat	cnt1;				// 1st Counter Used To Move Text & For Coloring
+GLfloat	cnt2;				// 2nd Counter Used To Move Text & For Coloring
+
 bool	keys[256];			// Array Used For The Keyboard Routine
 bool	active = TRUE;		// Window Active Flag Set To TRUE By Default
 bool	fullscreen = TRUE;	// Fullscreen Flag Set To Fullscreen Mode By Default
-GLfloat xspeed = 0, yspeed = 0, zspeed = 0;
-float points[45][45][3];    // The Array For The Points On The Grid Of Our "Wave"
-int wiggle_count = 0;		// Counter Used To Control How Fast Flag Waves
-
-GLfloat	xrot;				// X Rotation ( NEW )
-GLfloat	yrot;				// Y Rotation ( NEW )
-GLfloat	zrot;				// Z Rotation ( NEW )
-GLfloat hold;				// Temporarily Holds A Floating Point Value
-
-GLuint	texture[1];			// Storage For One Texture ( NEW )
 
 LRESULT	CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);	// Declaration For WndProc
 
-AUX_RGBImageRec* LoadBMP(const char* Filename)				// Loads A Bitmap Image
+GLvoid BuildFont(GLvoid)								// Build Our Bitmap Font
 {
-	FILE* File = NULL;									// File Handle
+	HFONT	font;										// Windows Font ID
+	HFONT	oldfont;									// Used For Good House Keeping
 
-	if (!Filename)										// Make Sure A Filename Was Given
-	{
-		return NULL;									// If Not Return NULL
-	}
+	base = glGenLists(96);								// Storage For 96 Characters
 
-	File = fopen(Filename, "r");							// Check To See If The File Exists
+	font = CreateFont(-24,							// Height Of Font
+		0,								// Width Of Font
+		0,								// Angle Of Escapement
+		0,								// Orientation Angle
+		FW_BOLD,						// Font Weight
+		FALSE,							// Italic
+		FALSE,							// Underline
+		FALSE,							// Strikeout
+		ANSI_CHARSET,					// Character Set Identifier
+		OUT_TT_PRECIS,					// Output Precision
+		CLIP_DEFAULT_PRECIS,			// Clipping Precision
+		ANTIALIASED_QUALITY,			// Output Quality
+		FF_DONTCARE | DEFAULT_PITCH,		// Family And Pitch
+		"Courier New");					// Font Name
 
-	if (File)											// Does The File Exist?
-	{
-		fclose(File);									// Close The Handle
-		return auxDIBImageLoad(Filename);				// Load The Bitmap And Return A Pointer
-	}
-
-	return NULL;										// If Load Failed Return NULL
+	oldfont = (HFONT)SelectObject(hDC, font);           // Selects The Font We Want
+	wglUseFontBitmaps(hDC, 32, 96, base);				// Builds 96 Characters Starting At Character 32
+	SelectObject(hDC, oldfont);							// Selects The Font We Want
+	DeleteObject(font);									// Delete The Font
 }
 
-int LoadGLTextures()									// Load Bitmaps And Convert To Textures
+GLvoid KillFont(GLvoid)									// Delete The Font List
 {
-	int Status = FALSE;									// Status Indicator
-
-	AUX_RGBImageRec* TextureImage[1];					// Create Storage Space For The Texture
-
-	memset(TextureImage, 0, sizeof(void*) * 1);           	// Set The Pointer To NULL
-
-	// Load The Bitmap, Check For Errors, If Bitmap's Not Found Quit
-	if (TextureImage[0] = LoadBMP("code.bmp"))
-	{
-		Status = TRUE;									// Set The Status To TRUE
-
-		glGenTextures(1, &texture[0]);					// Create The Texture
-
-		// Typical Texture Generation Using Data From The Bitmap
-		glBindTexture(GL_TEXTURE_2D, texture[0]);
-		glTexImage2D(GL_TEXTURE_2D, 0, 3, TextureImage[0]->sizeX, TextureImage[0]->sizeY, 0, GL_RGB, GL_UNSIGNED_BYTE, TextureImage[0]->data);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	}
-
-	if (TextureImage[0])									// If Texture Exists
-	{
-		if (TextureImage[0]->data)							// If Texture Image Exists
-		{
-			free(TextureImage[0]->data);					// Free The Texture Image Memory
-		}
-
-		free(TextureImage[0]);								// Free The Image Structure
-	}
-
-	return Status;										// Return The Status
+	glDeleteLists(base, 256);							// Delete All 96 Characters
 }
+
+
+GLvoid glPrint(const char *fmt, ...)					// Custom GL "Print" Routine
+{
+	float		length=0;								// Used To Find The Length Of The Text
+	char		text[256];								// Holds Our String
+	va_list		ap;										// Pointer To List Of Arguments
+
+	if (fmt == NULL)									// If There's No Text
+		return;											// Do Nothing
+
+	va_start(ap, fmt);									// Parses The String For Variables
+	vsprintf(text, fmt, ap);						    // And Converts Symbols To Actual Numbers
+	va_end(ap);											// Results Are Stored In Text
+
+	for (unsigned int loop=0;loop<(strlen(text));loop++)	// Loop To Find Text Length
+	{
+		length+=gmf[text[loop]].gmfCellIncX;			// Increase Length By Each Characters Width
+	}
+
+	glTranslatef(-length/2,0.0f,0.0f);					// Center Our Text On The Screen
+
+	glPushAttrib(GL_LIST_BIT);							// Pushes The Display List Bits
+	glListBase(base);									// Sets The Base Character to 0
+	glCallLists(strlen(text), GL_UNSIGNED_BYTE, text);	// Draws The Display List Text
+	glPopAttrib();										// Pops The Display List Bits
+}
+
 
 GLvoid ReSizeGLScene(GLsizei width, GLsizei height)		// Resize And Initialize The GL Window
 {
@@ -115,111 +114,31 @@ GLvoid ReSizeGLScene(GLsizei width, GLsizei height)		// Resize And Initialize Th
 
 int InitGL(GLvoid)										// All Setup For OpenGL Goes Here
 {
-	if (!LoadGLTextures())								// Jump To Texture Loading Routine ( NEW )
-	{
-		return FALSE;									// If Texture Didn't Load Return FALSE
-	}
-
-	glEnable(GL_TEXTURE_2D);							// Enable Texture Mapping ( NEW )
 	glShadeModel(GL_SMOOTH);							// Enable Smooth Shading
 	glClearColor(0.0f, 0.0f, 0.0f, 0.5f);				// Black Background
 	glClearDepth(1.0f);									// Depth Buffer Setup
 	glEnable(GL_DEPTH_TEST);							// Enables Depth Testing
 	glDepthFunc(GL_LEQUAL);								// The Type Of Depth Testing To Do
 	glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);	// Really Nice Perspective Calculations
-	glPolygonMode(GL_BACK, GL_FILL);					// Back Face Is Solid
-	glPolygonMode(GL_FRONT, GL_LINE);					// Front Face Is Made Of Lines
 
-	for (int x = 0; x < 45; x++)
-	{
-		for (int y = 0; y < 45; y++)
-		{
-			points[x][y][0] = float((x / 5.0f) - 4.5f);
-			points[x][y][1] = float((y / 5.0f) - 4.5f);
-			points[x][y][2] = float(sin((((x / 5.0f) * 40.0f) / 360.0f) * 3.141592654 * 2.0f));
-		}
-	}
+	BuildFont();										// Build The Font
 
 	return TRUE;										// Initialization Went OK
 }
 
 int DrawGLScene(GLvoid)									// Here's Where We Do All The Drawing
 {
-	int x, y;
-	float float_x, float_y, float_xb, float_yb;
-
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);	// Clear The Screen And The Depth Buffer
-	glLoadIdentity();									// Reset The View
-
-	glTranslatef(0.0f, 0.0f, -12.0f);
-
-	glRotatef(xrot, 1.0f, 0.0f, 0.0f);
-	glRotatef(yrot, 0.0f, 1.0f, 0.0f);
-	glRotatef(zrot, 0.0f, 0.0f, 1.0f);
-
-	glBindTexture(GL_TEXTURE_2D, texture[0]);
-
-	glBegin(GL_QUADS);
-	for (x = 0; x < 44; x++)
-	{
-		//y = 20;
-		for (y = 0; y < 44; y++)
-		{
-			float_x = float(x) / 44.0f+d;
-			float_y = float(y) / 44.0f;
-			float_xb = float(x + 1) / 44.0f+d;
-			float_yb = float(y + 1) / 44.0f;
-
-			//if (float_x >= 1)float_x -= 1;
-			if (float_xb >= 1)
-			{
-				float_x -= 1;
-				float_xb -= 1;
-			}
-			//if (float_y >= 1)float_y -= 1;
-			//if (float_yb >= 1)float_yb -= 1;
-			glTexCoord2f(float_x, float_y);
-			glVertex3f(points[x][y][0], points[x][y][1], points[x][y][2]);
-
-			glTexCoord2f(float_x, float_yb);
-			glVertex3f(points[x][y + 1][0], points[x][y + 1][1], points[x][y + 1][2]);
-
-			glTexCoord2f(float_xb, float_yb);
-			glVertex3f(points[x + 1][y + 1][0], points[x + 1][y + 1][1], points[x + 1][y + 1][2]);
-
-			glTexCoord2f(float_xb, float_y);
-			glVertex3f(points[x + 1][y][0], points[x + 1][y][1], points[x + 1][y][2]);
-		}
-	}
-	glEnd();
-
-
-
-	GLfloat hold1, hold2;
-	if (isshift)
-		if (wiggle_count >= 10)
-		{
-			for (y = 0; y < 45; y++)
-			{
-				hold = points[0][y][2];
-				for (x = 0; x < 44; x++)
-				{
-					points[x][y][2] = points[x + 1][y][2];
-				}
-				points[44][y][2] = hold;
-			}
-			wiggle_count = 0;
-		}
-	if (!isshift)
-		d += 0.0001f;
-
-	wiggle_count++;
-
-	xrot += xspeed;
-	yrot += yspeed;
-	zrot += zspeed;
-
-	return TRUE;										// Keep Going
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);	// Clear Screen And Depth Buffer
+	glLoadIdentity();									// Reset The Current Modelview Matrix
+	glTranslatef(0.0f,0.0f,-10.0f);						// Move One Unit Into The Screen
+	glRotatef(rot,1.0f,0.0f,0.0f);						// Rotate On The X Axis
+	glRotatef(rot*1.5f,0.0f,1.0f,0.0f);					// Rotate On The Y Axis
+	glRotatef(rot*1.4f,0.0f,0.0f,1.0f);					// Rotate On The Z Axis
+	// Pulsing Colors Based On The Rotation
+	glColor3f(1.0f*float(cos(rot/20.0f)),1.0f*float(sin(rot/25.0f)),1.0f-0.5f*float(cos(rot/17.0f)));
+ 	glPrint("NeHe - %3.2f",rot/50);						// Print GL Text To The Screen
+	rot+=0.5f;											// Increase The Rotation Variable
+	return TRUE;										// Everything Went OK
 }
 
 GLvoid KillGLWindow(GLvoid)								// Properly Kill The Window
@@ -261,6 +180,8 @@ GLvoid KillGLWindow(GLvoid)								// Properly Kill The Window
 		MessageBox(NULL, "Could Not Unregister Class.", "SHUTDOWN ERROR", MB_OK | MB_ICONINFORMATION);
 		hInstance = NULL;									// Set hInstance To NULL
 	}
+
+	KillFont();
 }
 
 /*	This Code Creates Our OpenGL Window.  Parameters Are:					*
@@ -511,7 +432,7 @@ int WINAPI WinMain(HINSTANCE	hInstance,			// Instance
 	}
 
 	// Create Our OpenGL Window
-	if (!CreateGLWindow("bosco & NeHe's Waving Texture Tutorial", 640, 480, 16, fullscreen))
+	if (!CreateGLWindow("NeHe's Bitmap Font Tutorial", 640, 480, 16, fullscreen))
 	{
 		return 0;									// Quit If Window Was Not Created
 	}
@@ -540,26 +461,6 @@ int WINAPI WinMain(HINSTANCE	hInstance,			// Instance
 			else									// Not Time To Quit, Update Screen
 			{
 				SwapBuffers(hDC);					// Swap Buffers (Double Buffering)
-				if (keys['T']&&!istp)
-				{
-					isshift = !isshift;
-					istp = true;
-				}
-				if (!keys['T'])
-					istp = false;
-				
-				if (keys['W'])
-					yspeed+=0.001;
-				if (keys['S'])
-					yspeed -= 0.001;
-				if (keys['A'])
-					xspeed -= 0.001;
-				if (keys['D'])
-					xspeed += 0.001;
-				if (keys['Q'])
-					zspeed -= 0.001;
-				if (keys['E'])
-					zspeed += 0.001;
 			}
 
 			if (keys[VK_F1])						// Is F1 Being Pressed?
@@ -568,7 +469,7 @@ int WINAPI WinMain(HINSTANCE	hInstance,			// Instance
 				KillGLWindow();						// Kill Our Current Window
 				fullscreen = !fullscreen;				// Toggle Fullscreen / Windowed Mode
 				// Recreate Our OpenGL Window
-				if (!CreateGLWindow("bosco & NeHe's Waving Texture Tutorial", 640, 480, 16, fullscreen))
+				if (!CreateGLWindow("NeHe's Bitmap Font Tutorial", 640, 480, 16, fullscreen))
 				{
 					return 0;						// Quit If Window Was Not Created
 				}
@@ -582,9 +483,10 @@ int WINAPI WinMain(HINSTANCE	hInstance,			// Instance
 }
 
 int main() {
-	WinMain(	NULL,			// Instance
-			NULL,		// Previous Instance
-				NULL,			// Command Line Parameters
+	WinMain(NULL,			// Instance
+		NULL,		// Previous Instance
+		NULL,			// Command Line Parameters
 		0);
 	return 0;
 }
+

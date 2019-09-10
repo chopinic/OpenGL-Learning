@@ -1,0 +1,4 @@
+#define _CRT_SECURE_NO_DEPRECATE
+
+int main() {	WinMain(	NULL,			// Instance			NULL,		// Previous Instance				NULL,			// Command Line Parameters		0);	return 0;}
+
