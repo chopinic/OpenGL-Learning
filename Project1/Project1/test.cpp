@@ -130,7 +130,7 @@ int DrawGLScene(GLvoid)								// 从这里开始进行所有的绘制
 	//glEnd();						// 立方体绘制结束
 
 	//表示x轴旋转变量
-	glLoadIdentity();
+	//glLoadIdentity();
 	glTranslatef(1.5f, 0.0f, -7.0f);				// 先右移再移入屏幕
 	glBegin(GL_QUADS);					// 开始绘制立方体
 	glColor3f(1.0f, 1.0f, 1.0f);
