@@ -1,11 +1,17 @@
 //#include <GLFW\glfw3.h>
 //#include <glad/glad.h> 
 //#include <GLFW/glfw3.h>
+#define _CRT_SECURE_NO_DEPRECATE
+#include <stdlib.h>
+#include <stdio.h>			// Header File For Standard Input/Output
 #include <windows.h>		// Windows的头文件
 #include <iostream>
 #include <gl.h>			// Header File For The OpenGL32 Library
 #include <glu.h>			// Header File For The GLu32 Library
 #include <glaux.h>		// Header File For The Glaux Library
+#pragma comment(lib, "glaux.lib")
+#pragma comment(lib, "glu.lib")
+#pragma comment(lib, "legacy_stdio_definitions.lib")
 
 HGLRC           hRC = NULL;							// 窗口着色描述表句柄
 HDC             hDC = NULL;							// OpenGL渲染描述表句柄
@@ -91,7 +97,7 @@ GLvoid BuildLists()
 	glTexCoord2f(1.0f, 1.0f); glVertex3f(-1.0f, 1.0f, 1.0f);
 	glTexCoord2f(0.0f, 1.0f); glVertex3f(-1.0f, 1.0f, -1.0f);
 	glEnd();								// 四边形绘制结束
-	glEndList();									// 第二个显示列表创建完毕
+	glEndList();									
 
 }
 int LoadGLTextures()									// Load Bitmaps And Convert To Textures
@@ -103,7 +109,7 @@ int LoadGLTextures()									// Load Bitmaps And Convert To Textures
 	memset(TextureImage, 0, sizeof(void*) * 1);           	// Set The Pointer To NULL
 
 	// Load The Bitmap, Check For Errors, If Bitmap's Not Found Quit
-	if (TextureImage[0] = LoadBMP("code.bmp"))
+	if (TextureImage[0] = LoadBMP("Cube.bmp"))
 	{
 		Status = TRUE;									// Set The Status To TRUE
 
@@ -144,10 +150,6 @@ int InitGL(GLvoid)								// 此处开始对OpenGL进行所有设置
 	glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);			// 告诉系统对透视进行修正
 	return TRUE;								// 初始化 OK
 }
-
-
-
-
 int DrawGLScene(GLvoid)								// 从这里开始进行所有的绘制
 {
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);	// 清除屏幕及深度缓存
@@ -155,7 +157,7 @@ int DrawGLScene(GLvoid)								// 从这里开始进行所有的绘制
 
 	glLoadIdentity();					// 重置模型观察矩阵
 	glTranslatef(-1.5f, 0.0f, -6.0f);				// 左移 1.5 单位，并移入屏幕 6.0
-
+	glColor3f(1.0f, 1.0f, 1.0f);
 	glRotatef(yrote, 0.0f, 1.0f, 0.0f);				// 绕Y轴旋转金字塔
 	glRotatef(xrote, 1.0f, 0.0f, 0.0f);				
 	glRotatef(zrote, 0.0f, 0.0f, 1.0f);				
@@ -164,7 +166,7 @@ int DrawGLScene(GLvoid)								// 从这里开始进行所有的绘制
 	
 
 	//表示x轴旋转变量
-	//glLoadIdentity();
+	glLoadIdentity();
 	glTranslatef(1.5f, 0.0f, -7.0f);				// 先右移再移入屏幕
 	glBegin(GL_QUADS);					// 开始绘制立方体
 	glColor3f(1.0f, 1.0f, 1.0f);
@@ -219,7 +221,6 @@ int DrawGLScene(GLvoid)								// 从这里开始进行所有的绘制
 	//rquad -= 0.15f;						// 减少四边形的旋转变量
 	return TRUE;						// 继续运行
 }
-
 GLvoid KillGLWindow(GLvoid)							// 正常销毁窗口
 {
 	if (fullscreen)								// 我们处于全屏模式吗?
@@ -401,10 +402,7 @@ BOOL CreateGLWindow(const char* title, int width, int height, int bits, bool ful
 	}
 	return TRUE;								// 成功
 }
-LRESULT CALLBACK WndProc(HWND	hWnd,					// 窗口的句柄
-	UINT	uMsg,					// 窗口的消息
-	WPARAM	wParam,					// 附加的消息内容
-	LPARAM	lParam)					// 附加的消息内容
+LRESULT CALLBACK WndProc(HWND	hWnd, UINT	uMsg,	 WPARAM	wParam, LPARAM	lParam)					// 附加的消息内容
 {
 	switch (uMsg)								// 检查Windows消息
 	{
@@ -455,11 +453,7 @@ LRESULT CALLBACK WndProc(HWND	hWnd,					// 窗口的句柄
 	// 向 DefWindowProc传递所有未处理的消息。
 	return DefWindowProc(hWnd, uMsg, wParam, lParam);
 }
-
-int WINAPI WinMain(HINSTANCE	hInstance,				// 当前窗口实例
-	HINSTANCE	hPrevInstance,				// 前一个窗口实例
-	LPSTR		lpCmdLine,				// 命令行参数
-	int		nCmdShow)				// 窗口显示状态
+int WINAPI WinMain(HINSTANCE	hInstance,	 HINSTANCE	hPrevInstance,	 LPSTR		lpCmdLine,	 int		nCmdShow)				// 窗口显示状态
 {
 	MSG	msg;								// Windowsx消息结构
 	BOOL	done = FALSE;							// 用来退出循环的Bool 变量
