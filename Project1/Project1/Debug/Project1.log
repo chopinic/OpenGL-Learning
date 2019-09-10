@@ -1,3 +1,4 @@
 ﻿  test.cpp
-\\Mac\Home\Documents\GitHub\OpenGL-test\Project1\Project1\test.cpp(315,3): warning C4838:  从“int”转换到“BYTE”需要收缩转换
-  Project1.vcxproj -> \\Mac\Home\Documents\GitHub\OpenGL-test\Project1\Debug\Project1.exe
+\\Mac\Home\Documents\GitHub\OpenGL-test\Project1\Project1\test.cpp(52,1): error C4996:  'fopen': This function or variable may be unsafe. Consider using fopen_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+C:\Program Files (x86)\Windows Kits\10\Include\10.0.17763.0\ucrt\stdio.h(208): message :  参见“fopen”的声明
+\\Mac\Home\Documents\GitHub\OpenGL-test\Project1\Project1\test.cpp(349,3): warning C4838:  从“int”转换到“BYTE”需要收缩转换

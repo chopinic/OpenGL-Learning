@@ -3,14 +3,16 @@
 //#include <GLFW/glfw3.h>
 #include <windows.h>		// Windows的头文件
 #include <iostream>
-#include <glew.h>		// 包含最新的gl.h,glu.h库
-#include <glut.h>		// 包含OpenGL实用库
+#include <gl.h>			// Header File For The OpenGL32 Library
+#include <glu.h>			// Header File For The GLu32 Library
+#include <glaux.h>		// Header File For The Glaux Library
 
 HGLRC           hRC = NULL;							// 窗口着色描述表句柄
 HDC             hDC = NULL;							// OpenGL渲染描述表句柄
 HWND            hWnd = NULL;							// 保存我们的窗口句柄
 HINSTANCE       hInstance;
 
+GLuint	texture[1];			// Storage For 1 Texture
 bool	keys[256];								// 保存键盘按键的数组
 bool	active = TRUE;								// 窗口的活动标志，缺省为TRUE
 bool	fullscreen = TRUE;							// 全屏标志缺省，缺省设定成全屏模式
@@ -19,7 +21,7 @@ GLfloat	xrote=0, yrote=0, zrote=0;
 GLfloat speed = 0.001f,xspeed = 0.0f,yspeed=0.0f,zspeed = 0.0f;
 //GLfloat		rtri=5;						// 用于三角形的角度
 GLfloat		rquad=9;						// 用于四边形的角度
-
+GLuint	box;						// 保存盒子的显示列表
 LRESULT	CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);				// WndProc的定义
 GLvoid ReSizeGLScene(GLsizei width, GLsizei height)				// 重置OpenGL窗口大小
 {
@@ -38,8 +40,102 @@ GLvoid ReSizeGLScene(GLsizei width, GLsizei height)				// 重置OpenGL窗口大小
 	glMatrixMode(GL_MODELVIEW);						// 选择模型观察矩阵
 	glLoadIdentity();							// 重置模型观察矩阵
 }
+AUX_RGBImageRec* LoadBMP(const char* Filename)				// Loads A Bitmap Image
+{
+	FILE* File = NULL;									// File Handle
+
+	if (!Filename)										// Make Sure A Filename Was Given
+	{
+		return NULL;									// If Not Return NULL
+	}
+
+	File = fopen(Filename, "r");							// Check To See If The File Exists
+
+	if (File)											// Does The File Exist?
+	{
+		fclose(File);									// Close The Handle
+		return auxDIBImageLoad(Filename);				// Load The Bitmap And Return A Pointer
+	}
+
+	return NULL;										// If Load Failed Return NULL
+}
+
+GLvoid BuildLists()
+{
+	box = glGenLists(1);				// 创建两个显示列表的名称
+	glNewList(box, GL_COMPILE);
+	glBegin(GL_QUADS);							// 开始绘制四边形
+			// 底面
+	glTexCoord2f(1.0f, 1.0f); glVertex3f(-1.0f, -1.0f, -1.0f);
+	glTexCoord2f(0.0f, 1.0f); glVertex3f(1.0f, -1.0f, -1.0f);
+	glTexCoord2f(0.0f, 0.0f); glVertex3f(1.0f, -1.0f, 1.0f);
+	glTexCoord2f(1.0f, 0.0f); glVertex3f(-1.0f, -1.0f, 1.0f);
+	// 前面
+	glTexCoord2f(0.0f, 0.0f); glVertex3f(-1.0f, -1.0f, 1.0f);
+	glTexCoord2f(1.0f, 0.0f); glVertex3f(1.0f, -1.0f, 1.0f);
+	glTexCoord2f(1.0f, 1.0f); glVertex3f(1.0f, 1.0f, 1.0f);
+	glTexCoord2f(0.0f, 1.0f); glVertex3f(-1.0f, 1.0f, 1.0f);
+	// 后面
+	glTexCoord2f(1.0f, 0.0f); glVertex3f(-1.0f, -1.0f, -1.0f);
+	glTexCoord2f(1.0f, 1.0f); glVertex3f(-1.0f, 1.0f, -1.0f);
+	glTexCoord2f(0.0f, 1.0f); glVertex3f(1.0f, 1.0f, -1.0f);
+	glTexCoord2f(0.0f, 0.0f); glVertex3f(1.0f, -1.0f, -1.0f);
+	// 右面
+	glTexCoord2f(1.0f, 0.0f); glVertex3f(1.0f, -1.0f, -1.0f);
+	glTexCoord2f(1.0f, 1.0f); glVertex3f(1.0f, 1.0f, -1.0f);
+	glTexCoord2f(0.0f, 1.0f); glVertex3f(1.0f, 1.0f, 1.0f);
+	glTexCoord2f(0.0f, 0.0f); glVertex3f(1.0f, -1.0f, 1.0f);
+	// 左面
+	glTexCoord2f(0.0f, 0.0f); glVertex3f(-1.0f, -1.0f, -1.0f);
+	glTexCoord2f(1.0f, 0.0f); glVertex3f(-1.0f, -1.0f, 1.0f);
+	glTexCoord2f(1.0f, 1.0f); glVertex3f(-1.0f, 1.0f, 1.0f);
+	glTexCoord2f(0.0f, 1.0f); glVertex3f(-1.0f, 1.0f, -1.0f);
+	glEnd();								// 四边形绘制结束
+	glEndList();									// 第二个显示列表创建完毕
+
+}
+int LoadGLTextures()									// Load Bitmaps And Convert To Textures
+{
+	int Status = FALSE;									// Status Indicator
+
+	AUX_RGBImageRec* TextureImage[1];					// Create Storage Space For The Texture
+
+	memset(TextureImage, 0, sizeof(void*) * 1);           	// Set The Pointer To NULL
+
+	// Load The Bitmap, Check For Errors, If Bitmap's Not Found Quit
+	if (TextureImage[0] = LoadBMP("code.bmp"))
+	{
+		Status = TRUE;									// Set The Status To TRUE
+
+		glGenTextures(1, &texture[0]);					// Create The Texture
+
+		// Typical Texture Generation Using Data From The Bitmap
+		glBindTexture(GL_TEXTURE_2D, texture[0]);
+		glTexImage2D(GL_TEXTURE_2D, 0, 3, TextureImage[0]->sizeX, TextureImage[0]->sizeY, 0, GL_RGB, GL_UNSIGNED_BYTE, TextureImage[0]->data);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	}
+
+	if (TextureImage[0])									// If Texture Exists
+	{
+		if (TextureImage[0]->data)							// If Texture Image Exists
+		{
+			free(TextureImage[0]->data);					// Free The Texture Image Memory
+		}
+
+		free(TextureImage[0]);								// Free The Image Structure
+	}
+
+	return Status;										// Return The Status
+}
 int InitGL(GLvoid)								// 此处开始对OpenGL进行所有设置
 {
+	if (!LoadGLTextures())								// Jump To Texture Loading Routine
+	{
+		return FALSE;									// If Texture Didn't Load Return FALSE
+	}
+	BuildLists();										// Jump To The Code That Creates Our Display Lists
+	glEnable(GL_TEXTURE_2D);							// Enable Texture Mapping
 	glShadeModel(GL_SMOOTH);						// 启用阴影平滑
 	glClearColor(0.0f, 0.0f, 0.0f, 0.0f);					// 黑色背景
 	glClearDepth(1.0f);							// 设置深度缓存
@@ -55,79 +151,17 @@ int InitGL(GLvoid)								// 此处开始对OpenGL进行所有设置
 int DrawGLScene(GLvoid)								// 从这里开始进行所有的绘制
 {
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);	// 清除屏幕及深度缓存
+	glBindTexture(GL_TEXTURE_2D, texture[0]);		// 选择纹理
+
 	glLoadIdentity();					// 重置模型观察矩阵
 	glTranslatef(-1.5f, 0.0f, -6.0f);				// 左移 1.5 单位，并移入屏幕 6.0
 
 	glRotatef(yrote, 0.0f, 1.0f, 0.0f);				// 绕Y轴旋转金字塔
 	glRotatef(xrote, 1.0f, 0.0f, 0.0f);				
 	glRotatef(zrote, 0.0f, 0.0f, 1.0f);				
+	glCallList(box);			// 绘制盒子
 
-	glBegin(GL_TRIANGLES);					// 开始绘制金字塔的各个面
-	glColor3f(1.0f, 0.0f, 0.0f);			// 红色
-	glVertex3f(0.0f, 1.0f, 0.0f);			// 三角形的上顶点 (前侧面)
-	glColor3f(1.0f, 0.0f, 0.0f);			
-	glVertex3f(-1.0f, -1.0f, 1.0f);			// 三角形的左下顶点 (前侧面)
-	glColor3f(1.0f, 0.0f, 0.0f);
-	glVertex3f(1.0f, -1.0f, 1.0f);			// 三角形的右下顶点 (前侧面)
-
-	glColor3f(0.0f, 1.0f, 0.0f);			
-	glVertex3f(0.0f, 1.0f, 0.0f);			// 三角形的上顶点 (右侧面)
-	glColor3f(0.0f, 1.0f, 0.0f);
-	glVertex3f(1.0f, -1.0f, 1.0f);			// 三角形的左下顶点 (右侧面)
-	glColor3f(0.0f, 1.0f, 0.0f);
-	glVertex3f(1.0f, -1.0f, -1.0f);			// 三角形的右下顶点 (右侧面)
-
-	glColor3f(0.0f, 0.0f, 1.0f);			
-	glVertex3f(0.0f, 1.0f, 0.0f);			// 三角形的上顶点 (后侧面)
-	glColor3f(0.0f, 0.0f, 1.0f);
-	glVertex3f(1.0f, -1.0f, -1.0f);			// 三角形的左下顶点 (后侧面)
-	glColor3f(0.0f, 0.0f, 1.0f);
-	glVertex3f(-1.0f, -1.0f, -1.0f);			// 三角形的右下顶点 (后侧面)
-
-	glColor3f(1.0f, 1.0f, 1.0f);			
-	glVertex3f(0.0f, 1.0f, 0.0f);			// 三角形的上顶点 (左侧面)
-	glColor3f(1.0f, 1.0f, 1.0f);
-	glVertex3f(-1.0f, -1.0f, -1.0f);			// 三角形的左下顶点 (左侧面)
-	glColor3f(1.0f, 1.0f, 1.0f);
-	glVertex3f(-1.0f, -1.0f, 1.0f);			// 三角形的右下顶点 (左侧面)
-	glEnd();						// 金字塔绘制结束
-
-	//glLoadIdentity();
-	//glTranslatef(1.5f, 0.0f, -7.0f);				// 先右移再移入屏幕
-	//glRotatef(rquad, 1.0f, 1.0f, 1.0f);			// 在XYZ轴上旋转立方体
-	//glBegin(GL_QUADS);					// 开始绘制立方体
-	//glColor3f(0.0f, 1.0f, 0.0f);			// 颜色改为蓝色
-	//glVertex3f(1.0f, 1.0f, -1.0f);			// 四边形的右上顶点 (顶面)
-	//glVertex3f(-1.0f, 1.0f, -1.0f);			// 四边形的左上顶点 (顶面)
-	//glVertex3f(-1.0f, 1.0f, 1.0f);			// 四边形的左下顶点 (顶面)
-	//glVertex3f(1.0f, 1.0f, 1.0f);			// 四边形的右下顶点 (顶面)
-	//glColor3f(1.0f, 0.5f, 0.0f);			// 颜色改成橙色
-	//glVertex3f(1.0f, -1.0f, 1.0f);			// 四边形的右上顶点(底面)
-	//glVertex3f(-1.0f, -1.0f, 1.0f);			// 四边形的左上顶点(底面)
-	//glVertex3f(-1.0f, -1.0f, -1.0f);			// 四边形的左下顶点(底面)
-	//glVertex3f(1.0f, -1.0f, -1.0f);			// 四边形的右下顶点(底面)
-	//glColor3f(1.0f, 0.0f, 0.0f);			// 颜色改成红色
-	//glVertex3f(1.0f, -1.0f, -1.0f);			// 四边形的右上顶点(后面)
-	//glVertex3f(-1.0f, -1.0f, -1.0f);			// 四边形的左上顶点(后面)
-	//glVertex3f(-1.0f, 1.0f, -1.0f);			// 四边形的左下顶点(后面)
-	//glVertex3f(1.0f, 1.0f, -1.0f);			// 四边形的右下顶点(后面)
-	//glColor3f(1.0f, 1.0f, 0.0f);			// 颜色改成黄色
-	//
-	//glVertex3f(1.0f, 1.0f, 1.0f);			// 四边形的右上顶点(前面)
-	//glVertex3f(-1.0f, 1.0f, 1.0f);			// 四边形的左上顶点(前面)
-	//glVertex3f(-1.0f, -1.0f, 1.0f);			// 四边形的左下顶点(前面)
-	//glVertex3f(1.0f, -1.0f, 1.0f);			// 四边形的右下顶点(前面)
-	//glColor3f(0.0f, 0.0f, 1.0f);			// 颜色改成蓝色
-	//glVertex3f(-1.0f, 1.0f, 1.0f);			// 四边形的右上顶点(左面)
-	//glVertex3f(-1.0f, 1.0f, -1.0f);			// 四边形的左上顶点(左面)
-	//glVertex3f(-1.0f, -1.0f, -1.0f);			// 四边形的左下顶点(左面)
-	//glVertex3f(-1.0f, -1.0f, 1.0f);			// 四边形的右下顶点(左面)
-	//glColor3f(1.0f, 0.0f, 1.0f);			// 颜色改成紫罗兰色
-	//glVertex3f(1.0f, 1.0f, -1.0f);			// 四边形的右上顶点(右面)
-	//glVertex3f(1.0f, 1.0f, 1.0f);			// 四边形的左上顶点(右面)
-	//glVertex3f(1.0f, -1.0f, 1.0f);			// 四边形的左下顶点(右面)
-	//glVertex3f(1.0f, -1.0f, -1.0f);			// 四边形的右下顶点(右面)
-	//glEnd();						// 立方体绘制结束
+	
 
 	//表示x轴旋转变量
 	//glLoadIdentity();
