@@ -162,19 +162,22 @@ int DrawGLScene(GLvoid)									// Here's Where We Do All The Drawing
 	glBegin(GL_QUADS);
 	for (x = 0; x < 44; x++)
 	{
+		//y = 20;
 		for (y = 0; y < 44; y++)
 		{
-			if (isshift)
-				d = 0;
 			float_x = float(x) / 44.0f+d;
-			float_y = float(y) / 44.0f+d;
+			float_y = float(y) / 44.0f;
 			float_xb = float(x + 1) / 44.0f+d;
-			float_yb = float(y + 1) / 44.0f+d;
+			float_yb = float(y + 1) / 44.0f;
 
-			if (float_x > 1)float_x -= 1;
-			if (float_xb > 1)float_xb -= 1;
-			if (float_y > 1)float_y -= 1;
-			if (float_yb > 1)float_yb -= 1;
+			//if (float_x >= 1)float_x -= 1;
+			if (float_xb >= 1)
+			{
+				float_x -= 1;
+				float_xb -= 1;
+			}
+			//if (float_y >= 1)float_y -= 1;
+			//if (float_yb >= 1)float_yb -= 1;
 			glTexCoord2f(float_x, float_y);
 			glVertex3f(points[x][y][0], points[x][y][1], points[x][y][2]);
 
@@ -188,26 +191,27 @@ int DrawGLScene(GLvoid)									// Here's Where We Do All The Drawing
 			glVertex3f(points[x + 1][y][0], points[x + 1][y][1], points[x + 1][y][2]);
 		}
 	}
-		
+	glEnd();
+
 
 
 	GLfloat hold1, hold2;
 	if (isshift)
-		if (wiggle_count == 10)
-	{
-		for (y = 0; y < 45; y++)
+		if (wiggle_count >= 10)
 		{
-			hold = points[0][y][2];
-			for (x = 0; x < 44; x++)
+			for (y = 0; y < 45; y++)
 			{
-				points[x][y][2] = points[x + 1][y][2];
+				hold = points[0][y][2];
+				for (x = 0; x < 44; x++)
+				{
+					points[x][y][2] = points[x + 1][y][2];
+				}
+				points[44][y][2] = hold;
 			}
-			points[44][y][2] = hold;
+			wiggle_count = 0;
 		}
-		d += 0.01f;
-		wiggle_count = 0;
-	}
-	glEnd();
+	if (!isshift)
+		d += 0.0001f;
 
 	wiggle_count++;
 
@@ -545,17 +549,17 @@ int WINAPI WinMain(HINSTANCE	hInstance,			// Instance
 					istp = false;
 				
 				if (keys['W'])
-					yspeed+=0.01;
+					yspeed+=0.001;
 				if (keys['S'])
-					yspeed -= 0.01;
+					yspeed -= 0.001;
 				if (keys['A'])
-					xspeed -= 0.01;
+					xspeed -= 0.001;
 				if (keys['D'])
-					xspeed += 0.01;
+					xspeed += 0.001;
 				if (keys['Q'])
-					zspeed -= 0.01;
+					zspeed -= 0.001;
 				if (keys['E'])
-					zspeed += 0.01;
+					zspeed += 0.001;
 			}
 
 			if (keys[VK_F1])						// Is F1 Being Pressed?

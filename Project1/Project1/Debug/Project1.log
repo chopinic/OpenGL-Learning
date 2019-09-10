@@ -1,11 +1,11 @@
 ﻿  test.cpp
-\\Mac\Home\Documents\GitHub\OpenGL-test\Project1\Project1\test.cpp(194,17): warning C4101:  “hold2”: 未引用的局部变量
-\\Mac\Home\Documents\GitHub\OpenGL-test\Project1\Project1\test.cpp(194,10): warning C4101:  “hold1”: 未引用的局部变量
-\\Mac\Home\Documents\GitHub\OpenGL-test\Project1\Project1\test.cpp(370,3): warning C4838:  从“int”转换到“BYTE”需要收缩转换
-\\Mac\Home\Documents\GitHub\OpenGL-test\Project1\Project1\test.cpp(548,18): warning C4305:  “+=”: 从“double”到“GLfloat”截断
-\\Mac\Home\Documents\GitHub\OpenGL-test\Project1\Project1\test.cpp(550,20): warning C4305:  “-=”: 从“double”到“GLfloat”截断
-\\Mac\Home\Documents\GitHub\OpenGL-test\Project1\Project1\test.cpp(552,20): warning C4305:  “-=”: 从“double”到“GLfloat”截断
-\\Mac\Home\Documents\GitHub\OpenGL-test\Project1\Project1\test.cpp(554,20): warning C4305:  “+=”: 从“double”到“GLfloat”截断
-\\Mac\Home\Documents\GitHub\OpenGL-test\Project1\Project1\test.cpp(556,20): warning C4305:  “-=”: 从“double”到“GLfloat”截断
-\\Mac\Home\Documents\GitHub\OpenGL-test\Project1\Project1\test.cpp(558,20): warning C4305:  “+=”: 从“double”到“GLfloat”截断
+\\Mac\Home\Documents\GitHub\OpenGL-test\Project1\Project1\test.cpp(198,17): warning C4101:  “hold2”: 未引用的局部变量
+\\Mac\Home\Documents\GitHub\OpenGL-test\Project1\Project1\test.cpp(198,10): warning C4101:  “hold1”: 未引用的局部变量
+\\Mac\Home\Documents\GitHub\OpenGL-test\Project1\Project1\test.cpp(374,3): warning C4838:  从“int”转换到“BYTE”需要收缩转换
+\\Mac\Home\Documents\GitHub\OpenGL-test\Project1\Project1\test.cpp(552,19): warning C4305:  “+=”: 从“double”到“GLfloat”截断
+\\Mac\Home\Documents\GitHub\OpenGL-test\Project1\Project1\test.cpp(554,21): warning C4305:  “-=”: 从“double”到“GLfloat”截断
+\\Mac\Home\Documents\GitHub\OpenGL-test\Project1\Project1\test.cpp(556,21): warning C4305:  “-=”: 从“double”到“GLfloat”截断
+\\Mac\Home\Documents\GitHub\OpenGL-test\Project1\Project1\test.cpp(558,21): warning C4305:  “+=”: 从“double”到“GLfloat”截断
+\\Mac\Home\Documents\GitHub\OpenGL-test\Project1\Project1\test.cpp(560,21): warning C4305:  “-=”: 从“double”到“GLfloat”截断
+\\Mac\Home\Documents\GitHub\OpenGL-test\Project1\Project1\test.cpp(562,21): warning C4305:  “+=”: 从“double”到“GLfloat”截断
   Project1.vcxproj -> \\Mac\Home\Documents\GitHub\OpenGL-test\Project1\Debug\Project1.exe
