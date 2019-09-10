@@ -22,19 +22,20 @@ HGLRC		hRC=NULL;		// Permanent Rendering Context
 HWND		hWnd=NULL;		// Holds Our Window Handle
 HINSTANCE	hInstance;		// Holds The Instance Of The Application
 
-GLuint	base;				// Base Display List For The Font Set
-GLfloat	rot;				// Used To Rotate The Text
-
 bool	keys[256];			// Array Used For The Keyboard Routine
 bool	active=TRUE;		// Window Active Flag Set To TRUE By Default
 bool	fullscreen=TRUE;	// Fullscreen Flag Set To Fullscreen Mode By Default
 
-GLYPHMETRICSFLOAT gmf[256];	// Storage For Information About Our Outline Font Characters
+GLuint	texture[1];			// One Texture Map
+GLuint	base;				// Base Display List For The Font Set
+
+GLfloat	rot;				// Used To Rotate The Text
 
 LRESULT	CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);	// Declaration For WndProc
 
 GLvoid BuildFont(GLvoid)								// Build Our Bitmap Font
 {
+	GLYPHMETRICSFLOAT	gmf[256];						// Address Buffer For Font Storage
 	HFONT	font;										// Windows Font ID
 
 	base = glGenLists(256);								// Storage For 256 Characters
@@ -47,12 +48,12 @@ GLvoid BuildFont(GLvoid)								// Build Our Bitmap Font
 						FALSE,							// Italic
 						FALSE,							// Underline
 						FALSE,							// Strikeout
-						ANSI_CHARSET,					// Character Set Identifier
+						SYMBOL_CHARSET,					// Character Set Identifier
 						OUT_TT_PRECIS,					// Output Precision
 						CLIP_DEFAULT_PRECIS,			// Clipping Precision
 						ANTIALIASED_QUALITY,			// Output Quality
 						FF_DONTCARE|DEFAULT_PITCH,		// Family And Pitch
-						"Comic Sans MS");				// Font Name
+						"Wingdings");					// Font Name
 
 	SelectObject(hDC, font);							// Selects The Font We Created
 
@@ -60,7 +61,7 @@ GLvoid BuildFont(GLvoid)								// Build Our Bitmap Font
 						0,								// Starting Character
 						255,							// Number Of Display Lists To Build
 						base,							// Starting Display Lists
-						0.0f,							// Deviation From The True Outlines
+						0.1f,							// Deviation From The True Outlines
 						0.2f,							// Font Thickness In The Z Direction
 						WGL_FONT_POLYGONS,				// Use Polygons, Not Lines
 						gmf);							// Address Of Buffer To Recieve Data
@@ -71,30 +72,73 @@ GLvoid KillFont(GLvoid)									// Delete The Font
   glDeleteLists(base, 256);								// Delete All 256 Characters
 }
 
-GLvoid glPrint(const char *fmt, ...)					// Custom GL "Print" Routine
+GLvoid glPrint(const char *text)								// Custom GL "Print" Routine
 {
-	float		length=0;								// Used To Find The Length Of The Text
-	char		text[256];								// Holds Our String
-	va_list		ap;										// Pointer To List Of Arguments
+  if (text == NULL)										// If There's No Text
+    return;												// Do Nothing
 
-	if (fmt == NULL)									// If There's No Text
-		return;											// Do Nothing
+  glPushAttrib(GL_LIST_BIT);							// Pushes The Display List Bits
+    glListBase(base);									// Sets The Base Character to 32
+    glCallLists(strlen(text), GL_UNSIGNED_BYTE, text);	// Draws The Display List Text
+  glPopAttrib();										// Pops The Display List Bits
+}
 
-	va_start(ap, fmt);									// Parses The String For Variables
-	    vsprintf(text, fmt, ap);						// And Converts Symbols To Actual Numbers
-	va_end(ap);											// Results Are Stored In Text
+AUX_RGBImageRec *LoadBMP(const char *Filename)				// Loads A Bitmap Image
+{
+	FILE *File=NULL;									// File Handle
 
-	for (unsigned int loop=0;loop<(strlen(text));loop++)	// Loop To Find Text Length
+	if (!Filename)										// Make Sure A Filename Was Given
 	{
-		length+=gmf[text[loop]].gmfCellIncX;			// Increase Length By Each Characters Width
+		return NULL;									// If Not Return NULL
 	}
 
-	glTranslatef(-length/2,0.0f,0.0f);					// Center Our Text On The Screen
+	File=fopen(Filename,"r");							// Check To See If The File Exists
 
-	glPushAttrib(GL_LIST_BIT);							// Pushes The Display List Bits
-	glListBase(base);									// Sets The Base Character to 0
-	glCallLists(strlen(text), GL_UNSIGNED_BYTE, text);	// Draws The Display List Text
-	glPopAttrib();										// Pops The Display List Bits
+	if (File)											// Does The File Exist?
+	{
+		fclose(File);									// Close The Handle
+		return auxDIBImageLoad(Filename);				// Load The Bitmap And Return A Pointer
+	}
+
+	return NULL;										// If Load Failed Return NULL
+}
+
+int LoadGLTextures()									// Load Bitmaps And Convert To Textures
+{
+	int Status=FALSE;									// Status Indicator
+
+	AUX_RGBImageRec *TextureImage[1];					// Create Storage Space For The Texture
+
+	memset(TextureImage,0,sizeof(void *)*1);           	// Set The Pointer To NULL
+
+	// Load The Bitmap, Check For Errors, If Bitmap's Not Found Quit
+	if (TextureImage[0]=LoadBMP("Lights.bmp"))
+	{
+		Status=TRUE;									// Set The Status To TRUE
+
+		glGenTextures(1, &texture[0]);					// Create The Texture
+
+		glBindTexture(GL_TEXTURE_2D, texture[0]);
+		gluBuild2DMipmaps(GL_TEXTURE_2D, 3, TextureImage[0]->sizeX, TextureImage[0]->sizeY, GL_RGB, GL_UNSIGNED_BYTE, TextureImage[0]->data);
+		glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR_MIPMAP_NEAREST);
+		glTexGeni(GL_S, GL_TEXTURE_GEN_MODE, GL_OBJECT_LINEAR);
+		glTexGeni(GL_T, GL_TEXTURE_GEN_MODE, GL_OBJECT_LINEAR);
+		glEnable(GL_TEXTURE_GEN_S);
+		glEnable(GL_TEXTURE_GEN_T);
+	}
+
+	if (TextureImage[0])									// If Texture Exists
+	{
+		if (TextureImage[0]->data)							// If Texture Image Exists
+		{
+			free(TextureImage[0]->data);					// Free The Texture Image Memory
+		}
+
+		free(TextureImage[0]);								// Free The Image Structure
+	}
+
+	return Status;										// Return The Status
 }
 
 GLvoid ReSizeGLScene(GLsizei width, GLsizei height)		// Resize And Initialize The GL Window
@@ -118,40 +162,39 @@ GLvoid ReSizeGLScene(GLsizei width, GLsizei height)		// Resize And Initialize Th
 
 int InitGL(GLvoid)										// All Setup For OpenGL Goes Here
 {
+	if (!LoadGLTextures())								// Jump To Texture Loading Routine
+	{
+		return FALSE;									// If Texture Didn't Load Return FALSE
+	}
+	BuildFont();										// Build The Font
+
 	glShadeModel(GL_SMOOTH);							// Enable Smooth Shading
 	glClearColor(0.0f, 0.0f, 0.0f, 0.5f);				// Black Background
 	glClearDepth(1.0f);									// Depth Buffer Setup
 	glEnable(GL_DEPTH_TEST);							// Enables Depth Testing
 	glDepthFunc(GL_LEQUAL);								// The Type Of Depth Testing To Do
-	glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);	// Really Nice Perspective Calculations
-	glEnable(GL_LIGHT0);								// Enable Default Light (Quick And Dirty)
+	glEnable(GL_LIGHT0);								// Quick And Dirty Lighting (Assumes Light0 Is Set Up)
 	glEnable(GL_LIGHTING);								// Enable Lighting
-	glEnable(GL_COLOR_MATERIAL);						// Enable Coloring Of Material
-
-	BuildFont();										// Build The Font
-
+	glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);	// Really Nice Perspective Calculations
+	glEnable(GL_TEXTURE_2D);							// Enable Texture Mapping
+	glBindTexture(GL_TEXTURE_2D, texture[0]);			// Select The Texture
 	return TRUE;										// Initialization Went OK
 }
 
 int DrawGLScene(GLvoid)									// Here's Where We Do All The Drawing
 {
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);	// Clear Screen And Depth Buffer
-	glLoadIdentity();									// Reset The Current Modelview Matrix
-	glTranslatef(0.0f,0.7f,-10.0f);						// Move One Unit Into The Screen
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);	// Clear The Screen And The Depth Buffer
+	glLoadIdentity();									// Reset The View
+	glTranslatef(1.1f*float(cos(rot/16.0f)),-1+rot/100,-3.0f);
 	glRotatef(rot,1.0f,0.0f,0.0f);						// Rotate On The X Axis
-	glRotatef(0,0.0f,1.0f,0.0f);					// Rotate On The Y Axis
-	glRotatef(0,0.0f,0.0f,1.0f);					// Rotate On The Z Axis
-	// Pulsing Colors Based On The Rotation
-	glColor3f(1.0f*float(cos(rot/20.0f)),1.0f*float(sin(rot/25.0f)),1.0f-0.5f*float(cos(rot/17.0f)));
- 	glPrint("TEST - %3.2f",rot);						// Print GL Text To The Screen
-	glLoadIdentity();
-	glTranslatef(0.0f, 0.0f, -10.0f);						// Move One Unit Into The Screen
-
-	glPrint("%3.2f", rot);						// Print GL Text To The Screen
-
-	rot+=0.005f;											// Increase The Rotation Variable
-	return TRUE;										// Everything Went OK
+	glRotatef(rot*1.2f,0.0f,1.0f,0.0f);					// Rotate On The Y Axis
+	glRotatef(rot*1.4f,0.0f,0.0f,1.0f);					// Rotate On The Z Axis
+	glTranslatef(-0.35f,-0.35f,0.1f);					// Center On X, Y, Z Axis
+	glPrint("N");										// Draw A Skull And Crossbones Symbol
+	rot+=0.01f;											// Increase The Rotation Variable
+	return TRUE;										// Keep Going
 }
+
 
 GLvoid KillGLWindow(GLvoid)								// Properly Kill The Window
 {
@@ -444,7 +487,7 @@ int WINAPI WinMain(	HINSTANCE	hInstance,			// Instance
 	}
 
 	// Create Our OpenGL Window
-	if (!CreateGLWindow("NeHe's Outline Font Tutorial",640,480,16,fullscreen))
+	if (!CreateGLWindow("NeHe's Texturemapped Outline Font Tutorial",640,480,16,fullscreen))
 	{
 		return 0;									// Quit If Window Was Not Created
 	}
@@ -481,7 +524,7 @@ int WINAPI WinMain(	HINSTANCE	hInstance,			// Instance
 				KillGLWindow();						// Kill Our Current Window
 				fullscreen=!fullscreen;				// Toggle Fullscreen / Windowed Mode
 				// Recreate Our OpenGL Window
-				if (!CreateGLWindow("NeHe's Outline Font Tutorial",640,480,16,fullscreen))
+				if (!CreateGLWindow("NeHe's Texturemapped Outline Font Tutorial",640,480,16,fullscreen))
 				{
 					return 0;						// Quit If Window Was Not Created
 				}
@@ -493,8 +536,6 @@ int WINAPI WinMain(	HINSTANCE	hInstance,			// Instance
 	KillGLWindow();									// Kill The Window
 	return (msg.wParam);							// Exit The Program
 }
-
-
 int main() {
 	WinMain(NULL,			// Instance
 		NULL,		// Previous Instance
