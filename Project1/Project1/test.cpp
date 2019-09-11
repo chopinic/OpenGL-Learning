@@ -24,12 +24,13 @@ bool	fullscreen = TRUE;	// Fullscreen Flag Set To Fullscreen Mode By Default
 bool	light;				// Lighting ON/OFF ( NEW )
 bool	lp;					// L Pressed? ( NEW )
 bool	fp;					// F Pressed? ( NEW )
-
-
+bool   gp;						// G健是否按下
 
 GLuint	filter;									// 滤波类型
 GLuint	texture[3];								// 3种纹理的储存空间
-
+GLuint fogMode[] = { GL_EXP, GL_EXP2, GL_LINEAR };		// 雾气的模式
+GLuint fogfilter = 0;					// 使用哪一种雾气
+GLfloat fogColor[4] = { 0.5f, 0.5f, 0.5f, 1.0f };		// 雾的颜色设为白色
 GLfloat	xrot;				// X Rotation
 GLfloat	yrot;				// Y Rotation
 GLfloat xspeed;				// X Rotation Speed
@@ -138,7 +139,15 @@ int InitGL(GLvoid)										// All Setup For OpenGL Goes Here
 
 	glEnable(GL_TEXTURE_2D);							// Enable Texture Mapping
 	glShadeModel(GL_SMOOTH);							// Enable Smooth Shading
-	glClearColor(0.0f, 0.0f, 0.0f, 0.5f);				// Black Background
+	glClearColor(0.5f, 0.5f, 0.5f, 1.0f);				// Black Background
+	glFogi(GL_FOG_MODE, fogMode[fogfilter]);		// 设置雾气的模式
+	glFogfv(GL_FOG_COLOR, fogColor);			// 设置雾的颜色
+	glFogf(GL_FOG_DENSITY, 0.35f);			// 设置雾的密度
+	glHint(GL_FOG_HINT, GL_DONT_CARE);			// 设置系统如何计算雾气
+	glFogf(GL_FOG_START, 1.0f);				// 雾气的开始位置
+	glFogf(GL_FOG_END, 10.0f);				// 雾气的结束位置
+	glEnable(GL_FOG);					// 使用雾气
+
 	glClearDepth(1.0f);									// Depth Buffer Setup
 	glEnable(GL_DEPTH_TEST);							// Enables Depth Testing
 	glDepthFunc(GL_LEQUAL);								// The Type Of Depth Testing To Do
@@ -155,7 +164,7 @@ int DrawGLScene(GLvoid)									// Here's Where We Do All The Drawing
 {
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);	// Clear The Screen And The Depth Buffer
 	glLoadIdentity();									// Reset The View
-	glTranslatef(0.0f, 0.0f, z);
+	glTranslatef(0.0f, 0.0f, -5.0f);
 
 	glRotatef(xrot, 1.0f, 0.0f, 0.0f);
 	glRotatef(yrot, 0.0f, 1.0f, 0.0f);
@@ -541,6 +550,21 @@ int WINAPI WinMain(HINSTANCE	hInstance,			// Instance
 				{
 					lp = FALSE;
 				}
+				if (keys['G'] && !gp)					// G键是否 按下
+				{
+					gp = TRUE;						// 是
+					fogfilter += 1;					// 变换雾气模式
+					if (fogfilter > 2)					// 模式是否大于2
+					{
+						fogfilter = 0;				// 置零
+					}
+					glFogi(GL_FOG_MODE, fogMode[fogfilter]);		// 设置雾气模式
+				}
+				if (!keys['G'])						// G键是否释放
+				{
+					gp = FALSE;						// 是，设置为释放
+				}
+
 				if (keys['F'] && !fp)
 				{
 					fp = TRUE;
