@@ -1,3 +1,5 @@
 ﻿  test.cpp
-\\Mac\Home\Documents\GitHub\OpenGL-test\Project1\Project1\test.cpp(380,3): warning C4838:  从“int”转换到“BYTE”需要收缩转换
+\\Mac\Home\Documents\GitHub\OpenGL-test\Project1\Project1\test.cpp(233,18): warning C4244:  “参数”: 从“float”转换到“GLint”，可能丢失数据
+\\Mac\Home\Documents\GitHub\OpenGL-test\Project1\Project1\test.cpp(233,11): warning C4244:  “参数”: 从“float”转换到“GLint”，可能丢失数据
+\\Mac\Home\Documents\GitHub\OpenGL-test\Project1\Project1\test.cpp(390,3): warning C4838:  从“int”转换到“BYTE”需要收缩转换
   Project1.vcxproj -> \\Mac\Home\Documents\GitHub\OpenGL-test\Project1\Debug\Project1.exe

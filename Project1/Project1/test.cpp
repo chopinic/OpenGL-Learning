@@ -25,6 +25,7 @@ HINSTANCE	hInstance;		// Holds The Instance Of The Application
 bool	keys[256];			// Array Used For The Keyboard Routine
 bool	active = TRUE;		// Window Active Flag Set To TRUE By Default
 bool	fullscreen = TRUE;	// Fullscreen Flag Set To Fullscreen Mode By Default
+bool OP = false;
 
 GLuint	fsize = 32;
 GLuint	base;				// Base Display List For The Font
@@ -90,7 +91,7 @@ GLvoid BuildFont(GLvoid)								// Build Our Font Display List
 {
 	float	cx;											// Holds Our X Character Coord
 	float	cy;											// Holds Our Y Character Coord
-
+	glDeleteLists(base, 256);
 	base = glGenLists(256);								// Creating 256 Display Lists
 	glBindTexture(GL_TEXTURE_2D, texture[0]);			// Select Our Font Texture
 	for (loop = 0; loop < 256; loop++)						// Loop Through All 256 Lists
@@ -220,7 +221,16 @@ int DrawGLScene(GLvoid)									// Here's Where We Do All The Drawing
 
 	glColor3f(1.0f, 1.0f, 1.0f);							// Set Color To White
 	glPrint(int(242 + 200 * cos((cnt2 + cnt1) / 5)), 2, "Giuseppe D'Agata", 0);
-
+	int k = fsize;
+	char t[5]; int p = 0;
+	char tt;
+	while (k > 0)
+	{
+		tt = k % 10 + 48;
+		k /= 10;
+		t[p++] = tt;
+	}
+	glPrint(-1.0f, -1.0f, t, 0);
 	cnt1 += 0.001f;										// Increase The First Counter
 	cnt2 += 0.00081f;										// Increase The Second Counter
 	return TRUE;										// Everything Went OK
@@ -536,7 +546,7 @@ int WINAPI WinMain(HINSTANCE	hInstance,			// Instance
 				DispatchMessage(&msg);				// Dispatch The Message
 			}
 		}
-		else										// If There Are No Messages
+		else									          	// If There Are No Messages
 		{
 			// Draw The Scene.  Watch For ESC Key And Quit Messages From DrawGLScene()
 			if ((active && !DrawGLScene()) || keys[VK_ESCAPE])	// Active?  Was There A Quit Received?
@@ -546,11 +556,22 @@ int WINAPI WinMain(HINSTANCE	hInstance,			// Instance
 			else									// Not Time To Quit, Update Screen
 			{
 				SwapBuffers(hDC);					// Swap Buffers (Double Buffering)
-				if (keys['O'])
-					fsize+=5;
-				if (keys['I'])
+				if (keys['O'] && !OP)
+				{
+					fsize += 5;
+					OP = true;
+					BuildFont();
+				}
+				if (keys['I'] && !OP)
+				{
 					if (fsize > 0)
-						fsize -= 1;
+						fsize -= 5;
+					OP = true;
+					BuildFont();
+				}
+				if(!keys['O']&&!keys['I'])
+					OP = false;
+
 			}
 
 			if (keys[VK_F1])						// Is F1 Being Pressed?
