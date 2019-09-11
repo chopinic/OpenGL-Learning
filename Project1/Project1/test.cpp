@@ -14,7 +14,7 @@
 #pragma comment( lib, "glu32.lib" ) 
 #pragma comment( lib, "OpenGL32.lib" )
 
-#define	MAX_PARTICLES	3		// Number Of Particles To Create
+#define	MAX_PARTICLES	1000		// Number Of Particles To Create
 
 HDC			hDC = NULL;				// Private GDI Device Context
 HGLRC		hRC = NULL;				// Permanent Rendering Context

@@ -1,3 +1,4 @@
 ﻿  test.cpp
 \\Mac\Home\Documents\GitHub\OpenGL-test\Project1\Project1\test.cpp(394,3): warning C4838:  从“int”转换到“BYTE”需要收缩转换
+MSVCRTD.lib(initializers.obj) : warning LNK4098: 默认库“msvcrt.lib”与其他库的使用冲突；请使用 /NODEFAULTLIB:library
   Project1.vcxproj -> \\Mac\Home\Documents\GitHub\OpenGL-test\Project1\Debug\Project1.exe
