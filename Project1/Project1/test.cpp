@@ -9,6 +9,11 @@
 #include <gl.h>					// Header File For The OpenGL32 Library
 #include <glu.h>					// Header File For The GLu32 Library
 #include <glaux.h>				// Heade
+#pragma comment(lib, "legacy_stdio_definitions.lib")
+#pragma comment( lib, "glaux.lib" )
+#pragma comment( lib, "glu32.lib" ) 
+#pragma comment( lib, "OpenGL32.lib" )
+
 #define	MAX_PARTICLES	1000		// Number Of Particles To Create
 
 HDC			hDC = NULL;				// Private GDI Device Context
@@ -86,7 +91,7 @@ int LoadGLTextures()									// Load Bitmap And Convert To A Texture
 	AUX_RGBImageRec* TextureImage[1];				// Create Storage Space For The Textures
 	memset(TextureImage, 0, sizeof(void*) * 1);		// Set The Pointer To NULL
 
-	if (TextureImage[0] = LoadBMP("Data/Particle.bmp"))	// Load Particle Texture
+	if (TextureImage[0] = LoadBMP("Particle.bmp"))	// Load Particle Texture
 	{
 		Status = TRUE;								// Set The Status To TRUE
 		glGenTextures(1, &texture[0]);				// Create One Texture
@@ -212,16 +217,16 @@ int DrawGLScene(GLvoid)										// Here's Where We Do All The Drawing
 			}
 
 			// If Number Pad 8 And Y Gravity Is Less Than 1.5 Increase Pull Upwards
-			if (keys[VK_NUMPAD8] && (particle[loop].yg < 1.5f)) particle[loop].yg += 0.01f;
+			if (keys['Z'] && (particle[loop].yg < 1.5f)) particle[loop].yg += 0.01f;
 
 			// If Number Pad 2 And Y Gravity Is Greater Than -1.5 Increase Pull Downwards
-			if (keys[VK_NUMPAD2] && (particle[loop].yg > -1.5f)) particle[loop].yg -= 0.01f;
+			if (keys['X'] && (particle[loop].yg > -1.5f)) particle[loop].yg -= 0.01f;
 
 			// If Number Pad 6 And X Gravity Is Less Than 1.5 Increase Pull Right
-			if (keys[VK_NUMPAD6] && (particle[loop].xg < 1.5f)) particle[loop].xg += 0.01f;
+			if (keys['C'] && (particle[loop].xg < 1.5f)) particle[loop].xg += 0.01f;
 
 			// If Number Pad 4 And X Gravity Is Greater Than -1.5 Increase Pull Left
-			if (keys[VK_NUMPAD4] && (particle[loop].xg > -1.5f)) particle[loop].xg -= 0.01f;
+			if (keys['V'] && (particle[loop].xg > -1.5f)) particle[loop].xg -= 0.01f;
 
 			if (keys[VK_TAB])										// Tab Key Causes A Burst
 			{
