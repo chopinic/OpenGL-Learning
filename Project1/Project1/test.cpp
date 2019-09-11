@@ -6,6 +6,7 @@
  *		Visit My Site At nehe.gamedev.net
  */
 //#include <stdlib.h>
+#define _CRT_SECURE_NO_DEPRECATE
 #include <windows.h>		// Header File For Windows
 #include <stdio.h>			// Header File For Standard Input/Output
 #include <gl.h>			// Header File For The OpenGL32 Library
@@ -21,14 +22,15 @@ HINSTANCE	hInstance;		// Holds The Instance Of The Application
 bool	keys[256];			// Array Used For The Keyboard Routine
 bool	active = TRUE;		// Window Active Flag Set To TRUE By Default
 bool	fullscreen = TRUE;	// Fullscreen Flag Set To Fullscreen Mode By Default
-bool	light;				// Lighting ON/OFF ( NEW )
-bool	lp;					// L Pressed? ( NEW )
-bool	fp;					// F Pressed? ( NEW )
+bool	light;				// Lighting ON/OFF
+bool	lp;					// L Pressed? 
+bool	fp;					// F Pressed? 
+bool    sp;                 // Spacebar Pressed? ( NEW )
 
-
-
-GLuint	filter;									// 滤波类型
-GLuint	texture[3];								// 3种纹理的储存空间
+int		part1;				// Start Of Disc ( NEW )
+int		part2;				// End Of Disc ( NEW )
+int		p1 = 0;				// Increase 1 ( NEW )
+int		p2 = 1;				// Increase 2 ( NEW )
 
 GLfloat	xrot;				// X Rotation
 GLfloat	yrot;				// Y Rotation
@@ -36,10 +38,15 @@ GLfloat xspeed;				// X Rotation Speed
 GLfloat yspeed;				// Y Rotation Speed
 GLfloat	z = -5.0f;			// Depth Into The Screen
 
+GLUquadricObj* quadratic;	// Storage For Our Quadratic Objects ( NEW )
+
 GLfloat LightAmbient[] = { 0.5f, 0.5f, 0.5f, 1.0f };
 GLfloat LightDiffuse[] = { 1.0f, 1.0f, 1.0f, 1.0f };
 GLfloat LightPosition[] = { 0.0f, 0.0f, 2.0f, 1.0f };
 
+GLuint	filter;				// Which Filter To Use
+GLuint	texture[3];			// Storage For 3 Textures
+GLuint  object = 0;			// Which Object To Draw (NEW)
 
 LRESULT	CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);	// Declaration For WndProc
 
@@ -52,7 +59,7 @@ AUX_RGBImageRec* LoadBMP(const char* Filename)				// Loads A Bitmap Image
 		return NULL;									// If Not Return NULL
 	}
 
-	fopen_s(&File, Filename, "r");							// Check To See If The File Exists
+	File = fopen(Filename, "r");							// Check To See If The File Exists
 
 	if (File)											// Does The File Exist?
 	{
@@ -66,17 +73,18 @@ AUX_RGBImageRec* LoadBMP(const char* Filename)				// Loads A Bitmap Image
 int LoadGLTextures()									// Load Bitmaps And Convert To Textures
 {
 	int Status = FALSE;									// Status Indicator
+	int Status2 = FALSE;									// Status Indicator
 
-	AUX_RGBImageRec* TextureImage[1];					// Create Storage Space For The Texture
+	AUX_RGBImageRec* TextureImage[2];					// Create Storage Space For The Texture
 
-	memset(TextureImage, 0, sizeof(void*) * 1);           	// Set The Pointer To NULL
+	memset(TextureImage, 0, sizeof(void*) * 2);           	// Set The Pointer To NULL
 
 	// Load The Bitmap, Check For Errors, If Bitmap's Not Found Quit
-	if (TextureImage[0] = LoadBMP("Crate.bmp"))
+	if (TextureImage[0] = LoadBMP("snow.bmp"))
 	{
 		Status = TRUE;									// Set The Status To TRUE
 
-		glGenTextures(3, &texture[0]);					// Create Three Textures
+		glGenTextures(1, &texture[0]);					// Create Three Textures
 
 		// Create Nearest Filtered Texture
 		glBindTexture(GL_TEXTURE_2D, texture[0]);
@@ -84,30 +92,40 @@ int LoadGLTextures()									// Load Bitmaps And Convert To Textures
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 		glTexImage2D(GL_TEXTURE_2D, 0, 3, TextureImage[0]->sizeX, TextureImage[0]->sizeY, 0, GL_RGB, GL_UNSIGNED_BYTE, TextureImage[0]->data);
 
-		// Create Linear Filtered Texture
+	}
+	if (TextureImage[1] = LoadBMP("Crate.bmp"))
+	{
+		Status2 = TRUE;									// Set The Status To TRUE
+
+		glGenTextures(2, &texture[1]);					// Create Three Textures
+
+				// Create Linear Filtered Texture
 		glBindTexture(GL_TEXTURE_2D, texture[1]);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-		glTexImage2D(GL_TEXTURE_2D, 0, 3, TextureImage[0]->sizeX, TextureImage[0]->sizeY, 0, GL_RGB, GL_UNSIGNED_BYTE, TextureImage[0]->data);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+		glTexImage2D(GL_TEXTURE_2D, 0, 3, TextureImage[1]->sizeX, TextureImage[1]->sizeY, 0, GL_RGB, GL_UNSIGNED_BYTE, TextureImage[1]->data);
 
 		// Create MipMapped Texture
 		glBindTexture(GL_TEXTURE_2D, texture[2]);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_NEAREST);
-		gluBuild2DMipmaps(GL_TEXTURE_2D, 3, TextureImage[0]->sizeX, TextureImage[0]->sizeY, GL_RGB, GL_UNSIGNED_BYTE, TextureImage[0]->data);
+		gluBuild2DMipmaps(GL_TEXTURE_2D, 3, TextureImage[1]->sizeX, TextureImage[1]->sizeY, GL_RGB, GL_UNSIGNED_BYTE, TextureImage[1]->data);
 	}
 
-	if (TextureImage[0])								// If Texture Exists
+
+	if (TextureImage[0]&& TextureImage[1])								// If Texture Exists
 	{
-		if (TextureImage[0]->data)						// If Texture Image Exists
+		if (TextureImage[0]->data&& TextureImage[1]->data)						// If Texture Image Exists
 		{
-			free(TextureImage[0]->data);// Free The Texture Image Memory will not compile in dev
+			free(TextureImage[0]->data);				// Free The Texture Image Memory
+			free(TextureImage[1]->data);				// Free The Texture Image Memory
 		}
 
 		free(TextureImage[0]);							// Free The Image Structure
+		free(TextureImage[1]);							// Free The Image Structure
 	}
 
-	return Status;										// Return The Status
+	return Status && Status2;										// Return The Status
 }
 
 GLvoid ReSizeGLScene(GLsizei width, GLsizei height)		// Resize And Initialize The GL Window
@@ -148,20 +166,16 @@ int InitGL(GLvoid)										// All Setup For OpenGL Goes Here
 	glLightfv(GL_LIGHT1, GL_DIFFUSE, LightDiffuse);		// Setup The Diffuse Light
 	glLightfv(GL_LIGHT1, GL_POSITION, LightPosition);	// Position The Light
 	glEnable(GL_LIGHT1);								// Enable Light One
+
+	quadratic = gluNewQuadric();							// Create A Pointer To The Quadric Object (Return 0 If No Memory) (NEW)
+	gluQuadricNormals(quadratic, GLU_SMOOTH);			// Create Smooth Normals (NEW)
+	gluQuadricTexture(quadratic, GL_TRUE);				// Create Texture Coords (NEW)
+
 	return TRUE;										// Initialization Went OK
 }
 
-int DrawGLScene(GLvoid)									// Here's Where We Do All The Drawing
+GLvoid glDrawCube()
 {
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);	// Clear The Screen And The Depth Buffer
-	glLoadIdentity();									// Reset The View
-	glTranslatef(0.0f, 0.0f, z);
-
-	glRotatef(xrot, 1.0f, 0.0f, 0.0f);
-	glRotatef(yrot, 0.0f, 1.0f, 0.0f);
-
-	glBindTexture(GL_TEXTURE_2D, texture[filter]);
-
 	glBegin(GL_QUADS);
 	// Front Face
 	glNormal3f(0.0f, 0.0f, 1.0f);
@@ -187,7 +201,7 @@ int DrawGLScene(GLvoid)									// Here's Where We Do All The Drawing
 	glTexCoord2f(0.0f, 1.0f); glVertex3f(1.0f, -1.0f, -1.0f);
 	glTexCoord2f(0.0f, 0.0f); glVertex3f(1.0f, -1.0f, 1.0f);
 	glTexCoord2f(1.0f, 0.0f); glVertex3f(-1.0f, -1.0f, 1.0f);
-	// Right face
+	// Right Face
 	glNormal3f(1.0f, 0.0f, 0.0f);
 	glTexCoord2f(1.0f, 0.0f); glVertex3f(1.0f, -1.0f, -1.0f);
 	glTexCoord2f(1.0f, 1.0f); glVertex3f(1.0f, 1.0f, -1.0f);
@@ -200,6 +214,57 @@ int DrawGLScene(GLvoid)									// Here's Where We Do All The Drawing
 	glTexCoord2f(1.0f, 1.0f); glVertex3f(-1.0f, 1.0f, 1.0f);
 	glTexCoord2f(0.0f, 1.0f); glVertex3f(-1.0f, 1.0f, -1.0f);
 	glEnd();
+}
+
+int DrawGLScene(GLvoid)									// Here's Where We Do All The Drawing
+{
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);	// Clear The Screen And The Depth Buffer
+	glLoadIdentity();									// Reset The View
+	glTranslatef(0.0f, 0.0f, z);
+
+	glRotatef(xrot, 1.0f, 0.0f, 0.0f);
+	glRotatef(yrot, 0.0f, 1.0f, 0.0f);
+
+	glBindTexture(GL_TEXTURE_2D, texture[filter]);
+
+	switch (object)
+	{
+	case 0:
+		glDrawCube();
+		break;
+	case 1:
+		glTranslatef(0.0f, 0.0f, -1.5f);					// Center The Cylinder
+		gluCylinder(quadratic, 1.0f, 1.0f, 3.0f, 32, 32);	// A Cylinder With A Radius Of 0.5 And A Height Of 2
+		break;
+	case 2:
+		gluDisk(quadratic, 0.5f, 1.5f, 32, 32);				// Draw A Disc (CD Shape) With An Inner Radius Of 0.5, And An Outer Radius Of 2.  Plus A Lot Of Segments ;)
+		break;
+	case 3:
+		gluSphere(quadratic, 1.3f, 32, 32);				// Draw A Sphere With A Radius Of 1 And 16 Longitude And 16 Latitude Segments
+		break;
+	case 4:
+		glTranslatef(0.0f, 0.0f, -1.5f);					// Center The Cone
+		gluCylinder(quadratic, 1.0f, 0.0f, 3.0f, 32, 32);	// A Cone With A Bottom Radius Of .5 And A Height Of 2
+		break;
+	case 5:
+		part1 += p1;
+		part2 += p2;
+
+		if (part1 > 359)									// 360 Degrees
+		{
+			p1 = 0;
+			part1 = 0;
+			p2 = 1;
+			part2 = 0;
+		}
+		if (part2 > 359)									// 360 Degrees
+		{
+			p1 = 1;
+			p2 = 0;
+		}
+		gluPartialDisk(quadratic, 0.5f, 1.5f, 32, 32, part1, part2 - part1);	// A Disk Like The One Before
+		break;
+	};
 
 	xrot += xspeed;
 	yrot += yspeed;
@@ -208,6 +273,8 @@ int DrawGLScene(GLvoid)									// Here's Where We Do All The Drawing
 
 GLvoid KillGLWindow(GLvoid)								// Properly Kill The Window
 {
+	gluDeleteQuadric(quadratic);						// Delete The Quadratic To Free System Resources
+
 	if (fullscreen)										// Are We In Fullscreen Mode?
 	{
 		ChangeDisplaySettings(NULL, 0);					// If So Switch Back To The Desktop
@@ -495,7 +562,7 @@ int WINAPI WinMain(HINSTANCE	hInstance,			// Instance
 	}
 
 	// Create Our OpenGL Window
-	if (!CreateGLWindow("NeHe's Textures, Lighting & Keyboard Tutorial", 640, 480, 16, fullscreen))
+	if (!CreateGLWindow("NeHe & TipTup's Quadratics Tutorial", 640, 480, 16, fullscreen))
 	{
 		return 0;									// Quit If Window Was Not Created
 	}
@@ -554,6 +621,17 @@ int WINAPI WinMain(HINSTANCE	hInstance,			// Instance
 				{
 					fp = FALSE;
 				}
+				if (keys[' '] && !sp)
+				{
+					sp = TRUE;
+					object++;
+					if (object > 5)
+						object = 0;
+				}
+				if (!keys[' '])
+				{
+					sp = FALSE;
+				}
 				if (keys[VK_PRIOR])
 				{
 					z -= 0.02f;
@@ -585,7 +663,7 @@ int WINAPI WinMain(HINSTANCE	hInstance,			// Instance
 					KillGLWindow();						// Kill Our Current Window
 					fullscreen = !fullscreen;				// Toggle Fullscreen / Windowed Mode
 					// Recreate Our OpenGL Window
-					if (!CreateGLWindow("NeHe's Textures, Lighting & Keyboard Tutorial", 640, 480, 16, fullscreen))
+					if (!CreateGLWindow("NeHe & TipTup's Quadratics Tutorial", 640, 480, 16, fullscreen))
 					{
 						return 0;						// Quit If Window Was Not Created
 					}
@@ -598,7 +676,6 @@ int WINAPI WinMain(HINSTANCE	hInstance,			// Instance
 	KillGLWindow();									// Kill The Window
 	return (msg.wParam);							// Exit The Program
 }
-
 int main()
 {
 	//InitGL();
