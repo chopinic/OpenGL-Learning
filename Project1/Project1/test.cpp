@@ -5,7 +5,7 @@
  *		If You've Found This Code Useful, Please Let Me Know.
  *		Visit My Site At nehe.gamedev.net
  */
-#include <stdlib.h>
+//#include <stdlib.h>
 #include <windows.h>		// Header File For Windows
 #include <stdio.h>			// Header File For Standard Input/Output
 #include <gl.h>			// Header File For The OpenGL32 Library
