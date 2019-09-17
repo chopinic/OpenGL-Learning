@@ -9,6 +9,7 @@
 #include <gl.h>			// Header File For The OpenGL32 Library
 #include <glu.h>			// Header File For The GLu32 Library
 #include <glaux.h>		// Header File For The Glaux Library
+#include "NeHeGL.h"
 #pragma comment(lib, "glaux.lib")
 #pragma comment(lib, "glu.lib")
 #pragma comment(lib, "legacy_stdio_definitions.lib")
@@ -17,7 +18,7 @@ HGLRC           hRC = NULL;							// 窗口着色描述表句柄
 HDC             hDC = NULL;							// OpenGL渲染描述表句柄
 HWND            hWnd = NULL;							// 保存我们的窗口句柄
 HINSTANCE       hInstance;
-
+RECT	rect;
 GLuint	texture[1];			// Storage For 1 Texture
 bool	keys[256];								// 保存键盘按键的数组
 bool	active = TRUE;								// 窗口的活动标志，缺省为TRUE
@@ -35,16 +36,10 @@ GLvoid ReSizeGLScene(GLsizei width, GLsizei height)				// 重置OpenGL窗口大小
 	{
 		height = 1;							// 将Height设为1
 	}
-
+	rect.right = width;
+	rect.top = height;
 	glViewport(0, 0, width, height);					// 重置当前的视口
-	glMatrixMode(GL_PROJECTION);						// 选择投影矩阵
-	glLoadIdentity();							// 重置投影矩阵
-
-	// 设置视口的大小
-	gluPerspective(45.0f, (GLfloat)width / (GLfloat)height, 0.1f, 100.0f);
-
-	glMatrixMode(GL_MODELVIEW);						// 选择模型观察矩阵
-	glLoadIdentity();							// 重置模型观察矩阵
+	
 }
 AUX_RGBImageRec* LoadBMP(const char* Filename)				// Loads A Bitmap Image
 {
@@ -136,6 +131,10 @@ int LoadGLTextures()									// Load Bitmaps And Convert To Textures
 }
 int InitGL(GLvoid)								// 此处开始对OpenGL进行所有设置
 {
+	rect.bottom = 0;
+	rect.top = 480;
+	rect.left = 0;
+	rect.right = 640;
 	if (!LoadGLTextures())								// Jump To Texture Loading Routine
 	{
 		return FALSE;									// If Texture Didn't Load Return FALSE
@@ -152,67 +151,52 @@ int InitGL(GLvoid)								// 此处开始对OpenGL进行所有设置
 }
 int DrawGLScene(GLvoid)								// 从这里开始进行所有的绘制
 {
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);	// 清除屏幕及深度缓存
-	glBindTexture(GL_TEXTURE_2D, texture[0]);		// 选择纹理
 
-	glLoadIdentity();					// 重置模型观察矩阵
-	glTranslatef(-1.5f, 0.0f, -6.0f);				// 左移 1.5 单位，并移入屏幕 6.0
-	glColor3f(1.0f, 1.0f, 1.0f);
-	glRotatef(yrote, 0.0f, 1.0f, 0.0f);				// 绕Y轴旋转金字塔
-	glRotatef(xrote, 1.0f, 0.0f, 0.0f);				
-	glRotatef(zrote, 0.0f, 0.0f, 1.0f);				
-	glCallList(box);			// 绘制盒子
+	int window_width = rect.right - rect.left;								// Calculate The Width (Right Side-Left Side)
+	int window_height = rect.bottom - rect.top;								// Calculate The Height (Bottom-Top)
+	glBindTexture(GL_TEXTURE_2D, texture[0]);		// 选择纹理
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);	// 清除屏幕及深度缓存
+	for (int i = 0; i < 2; i++)
+	{
+		if (i == 0)
+		{
+			glViewport(0, 0, window_width / 2, window_height);
+			glMatrixMode(GL_PROJECTION);								// Select The Projection Matrix
+			glLoadIdentity();
+			gluPerspective(45.0, 1, 0.1f, 500.0);
+
+			glMatrixMode(GL_MODELVIEW);									// Select The Modelview Matrix
+			glLoadIdentity();												// Reset The Modelview Matrix
+			glClear(GL_DEPTH_BUFFER_BIT);									// Clear Depth Buffer
+			glTranslatef(-1.5f, 0.0f, -6.0f);				// 左移 1.5 单位，并移入屏幕 6.0
+			glColor3f(1.0f, 1.0f, 1.0f);
+			glRotatef(yrote, 0.0f, 1.0f, 0.0f);				// 绕Y轴旋转金字塔
+			glRotatef(xrote, 1.0f, 0.0f, 0.0f);
+			glRotatef(zrote, 0.0f, 0.0f, 1.0f);
+			//gluOrtho2D(0, window_width / 2, window_height, 0);
+			glCallList(box);			// 绘制盒子
+		}
+		if (i == 1)
+		{
+			glViewport(window_width / 2, 0, window_width / 2, window_height);
+			glMatrixMode(GL_PROJECTION);								// Select The Projection Matrix
+			glLoadIdentity();
+			gluPerspective(45.0, 1, 0.1f, 500.0);
+			glTranslatef(0.0f, 0.0f, -2.0f);								// Move 2 Units Into The Screen
+			glRotatef(-45.0f, 1.0f, 0.0f, 0.0f);							// Tilt The Quad Below Back 45 Degrees.
+			glRotatef(1.5f, 0.0f, 0.0f, 1.0f);						// Rotate By zrot/1.5 On The Z-Axis
+
+			glBegin(GL_QUADS);											// Begin Drawing A Single Quad
+			glTexCoord2f(1.0f, 1.0f); glVertex3f(1.0f, 1.0f, 0.0f);
+			glTexCoord2f(0.0f, 1.0f); glVertex3f(-1.0f, 1.0f, 0.0f);
+			glTexCoord2f(0.0f, 0.0f); glVertex3f(-1.0f, -1.0f, 0.0f);
+			glTexCoord2f(1.0f, 0.0f); glVertex3f(1.0f, -1.0f, 0.0f);
+			glEnd();
+		}
+	}
+
 
 	
-
-	//表示x轴旋转变量
-	glLoadIdentity();
-	glTranslatef(1.5f, 0.0f, -7.0f);				// 先右移再移入屏幕
-	glBegin(GL_QUADS);					// 开始绘制立方体
-	glColor3f(1.0f, 1.0f, 1.0f);
-	glVertex3f(xspeed, 1.0f, 0.0f);
-	glVertex3f(0.0f, 1.0f, 0.0f);
-	glVertex3f(0.0f, 0.8f, 0.0f);
-	glVertex3f(xspeed, 0.8f, 0.0f);
-
-	//表示y轴旋转变量
-	glVertex3f(yspeed, 0.6f, 0.0f);
-	glVertex3f(0.0f, 0.6f, 0.0f);
-	glVertex3f(0.0f, 0.4f, 0.0f);
-	glVertex3f(yspeed, 0.4f, 0.0f);
-
-	//表示z轴旋转变量
-	glVertex3f(zspeed, 0.2f, 0.0f);
-	glVertex3f(0.0f, 0.2f, 0.0f);
-	glVertex3f(0.0f, 0.0f, 0.0f);
-	glVertex3f(zspeed, 0.0f, 0.0f);
-
-	//xrote
-	glColor3f(1.0f, 0.0f, 1.0f);
-	if (xrote >= 360 || xrote <= -360)
-		xrote = 0;
-	glVertex3f(xrote / 150, -0.2f, 0.0f);
-	glVertex3f(0.0f, -0.2f, 0.0f);
-	glVertex3f(0.0f, -0.4f, 0.0f);
-	glVertex3f(xrote / 150, -0.4f, 0.0f);
-
-	glColor3f(1.0f, 1.0f, 0.0f);
-	if (yrote >= 360 || yrote <= -360)
-		yrote = 0;
-	glVertex3f(yrote / 150, -0.6f, 0.0f);
-	glVertex3f(0.0f, -0.6f, 0.0f);
-	glVertex3f(0.0f, -0.8f, 0.0f);
-	glVertex3f(yrote / 150, -0.8f, 0.0f);
-
-	glColor3f(0.0f, 1.0f, 1.0f);
-	if (zrote >= 360 || zrote <= -360)
-		zrote = 0;
-	glVertex3f(zrote / 150, -1.0f, 0.0f);
-	glVertex3f(0.0f, -1.0f, 0.0f);
-	glVertex3f(0.0f, -1.2f, 0.0f);
-	glVertex3f(zrote / 150, -1.2f, 0.0f);
-
-	glEnd();
 	xrote += xspeed;
 	yrote += yspeed;
 	zrote += zspeed;
