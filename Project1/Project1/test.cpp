@@ -168,7 +168,7 @@ int DrawGLScene(GLvoid)								// 从这里开始进行所有的绘制
 			glMatrixMode(GL_MODELVIEW);									// Select The Modelview Matrix
 			glLoadIdentity();												// Reset The Modelview Matrix
 			glClear(GL_DEPTH_BUFFER_BIT);									// Clear Depth Buffer
-			glTranslatef(-1.5f, 0.0f, -6.0f);				// 左移 1.5 单位，并移入屏幕 6.0
+			glTranslatef(-1.5f, 0.0f, -4.50f);				// 左移 1.5 单位，并移入屏幕 6.0
 			glColor3f(1.0f, 1.0f, 1.0f);
 			glRotatef(yrote, 0.0f, 1.0f, 0.0f);				// 绕Y轴旋转金字塔
 			glRotatef(xrote, 1.0f, 0.0f, 0.0f);
@@ -184,6 +184,7 @@ int DrawGLScene(GLvoid)								// 从这里开始进行所有的绘制
 			gluPerspective(45.0, 1, 0.1f, 500.0);
 			glMatrixMode(GL_MODELVIEW);									// Select The Modelview Matrix
 			glLoadIdentity();
+			glTranslatef(0.0f, 0.0f, -4.0f);						// 右移3单位
 			glBegin(GL_TRIANGLES);							// 绘制三角形
 			glColor3f(1.0, 0.0, 0.0);
 			glVertex3f(0.0f, 1.0f, 0.0f);					// 上顶点
