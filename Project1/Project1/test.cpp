@@ -182,15 +182,15 @@ int DrawGLScene(GLvoid)								// 从这里开始进行所有的绘制
 			glMatrixMode(GL_PROJECTION);								// Select The Projection Matrix
 			glLoadIdentity();
 			gluPerspective(45.0, 1, 0.1f, 500.0);
-			glTranslatef(0.0f, 0.0f, -2.0f);								// Move 2 Units Into The Screen
-			glRotatef(-45.0f, 1.0f, 0.0f, 0.0f);							// Tilt The Quad Below Back 45 Degrees.
-			glRotatef(1.5f, 0.0f, 0.0f, 1.0f);						// Rotate By zrot/1.5 On The Z-Axis
-
-			glBegin(GL_QUADS);											// Begin Drawing A Single Quad
-			glTexCoord2f(1.0f, 1.0f); glVertex3f(1.0f, 1.0f, 0.0f);
-			glTexCoord2f(0.0f, 1.0f); glVertex3f(-1.0f, 1.0f, 0.0f);
-			glTexCoord2f(0.0f, 0.0f); glVertex3f(-1.0f, -1.0f, 0.0f);
-			glTexCoord2f(1.0f, 0.0f); glVertex3f(1.0f, -1.0f, 0.0f);
+			glMatrixMode(GL_MODELVIEW);									// Select The Modelview Matrix
+			glLoadIdentity();
+			glBegin(GL_TRIANGLES);							// 绘制三角形
+			glColor3f(1.0, 0.0, 0.0);
+			glVertex3f(0.0f, 1.0f, 0.0f);					// 上顶点
+			glColor3f(0.0, 1.0, 0.0);
+			glVertex3f(-0.5f, 0.0f, 0.0f);					// 左下
+			glColor3f(0.0, 0.0, 1.0);
+			glVertex3f(0.5f, 0.0f, 0.0f);					// 右下
 			glEnd();
 		}
 	}
