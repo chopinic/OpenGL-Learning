@@ -30,6 +30,10 @@ GLfloat speed = 0.001f,xspeed = 0.0f,yspeed=0.0f,zspeed = 0.0f;
 GLfloat		rquad=9;						// 用于四边形的角度
 GLuint	box;						// 保存盒子的显示列表
 LRESULT	CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);				// WndProc的定义
+GLUquadricObj* quadric;													// The Quadric Object
+
+
+
 GLvoid ReSizeGLScene(GLsizei width, GLsizei height)				// 重置OpenGL窗口大小
 {
 	if (height == 0)								// 防止被零除
@@ -135,6 +139,10 @@ int InitGL(GLvoid)								// 此处开始对OpenGL进行所有设置
 	rect.top = 480;
 	rect.left = 0;
 	rect.right = 640;
+	quadric = gluNewQuadric();											// Create A Pointer To The Quadric Object
+	gluQuadricNormals(quadric, GLU_SMOOTH);								// Create Smooth Normals 
+	gluQuadricTexture(quadric, GL_TRUE);								// Create Texture Coords
+
 	if (!LoadGLTextures())								// Jump To Texture Loading Routine
 	{
 		return FALSE;									// If Texture Didn't Load Return FALSE
@@ -160,38 +168,37 @@ int DrawGLScene(GLvoid)								// 从这里开始进行所有的绘制
 	{
 		if (i == 0)
 		{
-			glViewport(0, 0, window_width / 2, window_height);
+			glViewport(window_width / 2, window_height / 2, window_width / 2, window_height / 2);
 			glMatrixMode(GL_PROJECTION);								// Select The Projection Matrix
-			glLoadIdentity();
-			gluPerspective(45.0, 1, 0.1f, 500.0);
-
+			glLoadIdentity();											// Reset The Projection Matrix
+			gluPerspective(45.0, (float)rect.right / (float)rect.top, 0.1f, 500.0);
 			glMatrixMode(GL_MODELVIEW);									// Select The Modelview Matrix
 			glLoadIdentity();												// Reset The Modelview Matrix
 			glClear(GL_DEPTH_BUFFER_BIT);									// Clear Depth Buffer
-			glTranslatef(-1.5f, 0.0f, -4.50f);				// 左移 1.5 单位，并移入屏幕 6.0
-			glColor3f(1.0f, 1.0f, 1.0f);
-			glRotatef(yrote, 0.0f, 1.0f, 0.0f);				// 绕Y轴旋转金字塔
-			glRotatef(xrote, 1.0f, 0.0f, 0.0f);
-			glRotatef(zrote, 0.0f, 0.0f, 1.0f);
+			glTranslatef(0.0f, 0.0f, -14.0f);								// Move 14 Units Into The Screen
+
+			glRotatef(xrote, 1.0f, 0.0f, 0.0f);								// Rotate By xrot On The X-Axis
+			glRotatef(yrote, 0.0f, 1.0f, 0.0f);								// Rotate By yrot On The Y-Axis
+			glRotatef(zrote, 0.0f, 0.0f, 1.0f);								// Rotate By zrot On The Z-Axis
+
+			gluSphere(quadric, 4.0f, 32, 32);
 			//gluOrtho2D(0, window_width / 2, window_height, 0);
-			glCallList(box);			// 绘制盒子
+			//glCallList(box);			// 绘制盒子
 		}
 		if (i == 1)
 		{
 			glViewport(window_width / 2, 0, window_width / 2, window_height);
 			glMatrixMode(GL_PROJECTION);								// Select The Projection Matrix
 			glLoadIdentity();
-			gluPerspective(45.0, 1, 0.1f, 500.0);
+			gluOrtho2D(window_width / 2, window_width, 0, window_height);
+			//gluPerspective(45.0, (float)rect.right / (float)rect.top, 0.1f, 500.0);
 			glMatrixMode(GL_MODELVIEW);									// Select The Modelview Matrix
 			glLoadIdentity();
-			glTranslatef(0.0f, 0.0f, -4.0f);						// 右移3单位
-			glBegin(GL_TRIANGLES);							// 绘制三角形
-			glColor3f(1.0, 0.0, 0.0);
-			glVertex3f(0.0f, 1.0f, 0.0f);					// 上顶点
-			glColor3f(0.0, 1.0, 0.0);
-			glVertex3f(-0.5f, 0.0f, 0.0f);					// 左下
-			glColor3f(0.0, 0.0, 1.0);
-			glVertex3f(0.5f, 0.0f, 0.0f);					// 右下
+			glTranslatef(0.0f, 0.0f, 0.0f);						
+			glBegin(GL_TRIANGLES);
+			glVertex2f(0, 0);
+			glVertex2f(0, 1.0f);
+			glVertex2f(1.0f, 0.50f);
 			glEnd();
 		}
 	}
