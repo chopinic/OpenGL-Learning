@@ -61,16 +61,20 @@ void display()
 	gluSphere(quadric, 4.0f, 32, 32);								// Draw A Sphere
 
 	//定义右上角区域
-	glColor3f(0.0, 0.0, 1.0);
 	glViewport(200, 200, 200, 200);
-	glMatrixMode(GL_PROJECTION);								// Select The Projection Matrix
+	glMatrixMode(GL_PROJECTION);						// 选择投影矩阵
+	glLoadIdentity();							// 重置投影矩阵
+	gluPerspective(45.0f, 1, 0.1f, 100.0f);
+	glColor3f(0.0, 0.0, 1.0);
+	glMatrixMode(GL_MODELVIEW);						// 选择模型观察矩阵
 	glLoadIdentity();
-	gluOrtho2D(200, 400, 200 , 400);
-	glBegin(GL_POLYGON);
-	glVertex2f(250, 250);
-	glVertex2f(250, 350);
-	glVertex2f(350, 350);
-	glVertex2f(350, 250);
+	glTranslatef(0.0f, 0.0f, -7.0f);				// 移入屏幕
+	glBegin(GL_QUADS);					// 开始绘制
+	glColor3f(1.0f, 1.0f, 1.0f);
+	glVertex3f(1.0f, 1.0f, 0.0f);
+	glVertex3f(0.0f, 1.0f, 0.0f);
+	glVertex3f(0.0f, 0.8f, 0.0f);
+	glVertex3f(1.0f, 0.8f, 0.0f);
 	glEnd();
 	
 	glFlush();
