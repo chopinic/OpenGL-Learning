@@ -85,7 +85,7 @@
       <ConformanceMode>true</ConformanceMode>
     </ClCompile>
     <Link>
-      <SubSystem>Console</SubSystem>
+      <SubSystem>Windows</SubSystem>
       <AdditionalDependencies>opengl32.lib;glfw3.lib;glut32.lib;glew32s.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>Z:\Configure\OpenGL\libs;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
