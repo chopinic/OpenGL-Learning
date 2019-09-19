@@ -1,5 +1,6 @@
 // OpenGL_03.cpp : 定义控制台应用程序的入口点。
 //
+#define _CRT_SECURE_NO_DEPRECATE
 
 #include "stdio.h"
 #include <glut.h>
@@ -102,7 +103,7 @@ AUX_RGBImageRec* LoadBMP(char* Filename)				// Loads A Bitmap Image
 }
 int LoadGLTextures()									// Load Bitmaps And Convert To Textures
 {
-
+	return 1;
 }
 
 bool init()
@@ -117,7 +118,7 @@ bool init()
 }
 bool display()
 {
-	glClear(GL_DEPTH_BUFFER_BIT);
+	//glClear(GL_DEPTH_BUFFER_BIT);
 	glViewport(0, 0, Width, Height);
 	glClear(GL_COLOR_BUFFER_BIT);
 	glMatrixMode(GL_PROJECTION);
