@@ -19,6 +19,7 @@ HDC			hDC = NULL;		// Private GDI Device Context
 HGLRC		hRC = NULL;		// Permanent Rendering Context
 HWND		hWnd = NULL;		// Holds Our Window Handle
 HINSTANCE	hInstance;		// Holds The Instance Of The Application
+GLuint	texture[3];			// Storage For 3 Textures
 
 GLsizei Width, Height;
 bool	keys[256];			// Array Used For The Keyboard Routine
@@ -101,113 +102,149 @@ AUX_RGBImageRec* LoadBMP(char* Filename)				// Loads A Bitmap Image
 
 	return NULL;										// If Load Failed Return NULL
 }
+
+AUX_RGBImageRec* LoadBMP(const char* Filename)				// Loads A Bitmap Image
+{
+	FILE* File = NULL;									// File Handle
+
+	if (!Filename)										// Make Sure A Filename Was Given
+	{
+		return NULL;									// If Not Return NULL
+	}
+
+	File = fopen(Filename, "r");							// Check To See If The File Exists
+
+	if (File)											// Does The File Exist?
+	{
+		fclose(File);									// Close The Handle
+		return auxDIBImageLoad(Filename);				// Load The Bitmap And Return A Pointer
+	}
+
+	return NULL;										// If Load Failed Return NULL
+}
 int LoadGLTextures()									// Load Bitmaps And Convert To Textures
 {
-	return 1;
+	int Status = FALSE;									// Status Indicator
+
+	AUX_RGBImageRec* TextureImage[1];					// Create Storage Space For The Texture
+
+	memset(TextureImage, 0, sizeof(void*) * 1);           	// Set The Pointer To NULL
+
+	// Load The Bitmap, Check For Errors, If Bitmap's Not Found Quit
+	if (TextureImage[0] = LoadBMP("Data/view.bmp"))
+	{
+		Status = TRUE;									// Set The Status To TRUE
+
+		glGenTextures(3, &texture[0]);					// Create Three Textures
+
+		// Create Nearest Filtered Texture
+		glBindTexture(GL_TEXTURE_2D, texture[0]);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+		glTexImage2D(GL_TEXTURE_2D, 0, 3, TextureImage[0]->sizeX, TextureImage[0]->sizeY, 0, GL_RGB, GL_UNSIGNED_BYTE, TextureImage[0]->data);
+
+		// Create Linear Filtered Texture
+		glBindTexture(GL_TEXTURE_2D, texture[1]);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+		glTexImage2D(GL_TEXTURE_2D, 0, 3, TextureImage[0]->sizeX, TextureImage[0]->sizeY, 0, GL_RGB, GL_UNSIGNED_BYTE, TextureImage[0]->data);
+
+		// Create MipMapped Texture
+		glBindTexture(GL_TEXTURE_2D, texture[2]);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_NEAREST);
+		gluBuild2DMipmaps(GL_TEXTURE_2D, 3, TextureImage[0]->sizeX, TextureImage[0]->sizeY, GL_RGB, GL_UNSIGNED_BYTE, TextureImage[0]->data);
+	}
+
+	if (TextureImage[0])								// If Texture Exists
+	{
+		if (TextureImage[0]->data)						// If Texture Image Exists
+		{
+			free(TextureImage[0]->data);// Free The Texture Image Memory will not compile in dev
+		}
+
+		free(TextureImage[0]);							// Free The Image Structure
+	}
+
+	return Status;										// Return The Status
 }
 
 bool init()
 {
-	glEnable(GL_DEPTH_TEST);							// Enables Depth Testing
+	if (!LoadGLTextures())								// Jump To Texture Loading Routine
+	{
+		return FALSE;									// If Texture Didn't Load Return FALSE
+	}
+	glEnable(GL_TEXTURE_2D);							// Enable Texture Mapping
+	//glShadeModel(GL_SMOOTH);							// Enable Smooth Shading
+
+	glClearColor(1.0f, 1.0f, 1.0f, 0.5f);				// Black Background
+
+	//glEnable(GL_DEPTH_TEST);							// Enables Depth Testing
 	Width = 640;
 	Height = 480;
-	quadric = gluNewQuadric();											// Create A Pointer To The Quadric Object
-	gluQuadricNormals(quadric, GLU_SMOOTH);								// Create Smooth Normals 
-	gluQuadricTexture(quadric, GL_TRUE);
+	//quadric = gluNewQuadric();											// Create A Pointer To The Quadric Object
+	//gluQuadricNormals(quadric, GLU_SMOOTH);								// Create Smooth Normals 
+	//gluQuadricTexture(quadric, GL_TRUE);
+	glViewport(0, 0, Width, Height);
+	glMatrixMode(GL_PROJECTION);
+	glLoadIdentity();
+	gluPerspective(45.0f, (GLfloat)Width / (GLfloat)Height, 0.1f, 100.0f);
+	glMatrixMode(GL_MODELVIEW);
+	glEnable(GL_BLEND);		// 打开混合
+	//glBlendFunc(GL_SRC_ALPHA, GL_ONE);    //color blend mode : ONE(whole)
+	//glBlendFunc(GL_SRC_ALPHA, GL_ZERO);    //color blend mode : ONE(whole)
+	//glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
 	return true;
 }
 bool display()
 {
-	//glClear(GL_DEPTH_BUFFER_BIT);
-	glViewport(0, 0, Width, Height);
-	glClear(GL_COLOR_BUFFER_BIT);
-	glMatrixMode(GL_PROJECTION);
-	glLoadIdentity();
-	gluPerspective(45.0f, (GLfloat)Width / (GLfloat)Height, 0.1f, 100.0f);
-	glMatrixMode(GL_MODELVIEW);
-	glLoadIdentity();
-	glClear(GL_COLOR_BUFFER_BIT);
-	glColor3f(1.0, 0.0, 0.0);
-	glBegin(GL_LINES);
-	glVertex2f(-1.0, 0);
-	glVertex2f(1.0, 0);
-	glVertex2f(0, -1.0);
-	glVertex2f(0, 1.0);
-	glEnd();
-
-
-	//定义在左上角的区域
-
-	glColor3f(1.0, 0.0, 0.0);
-	glViewport(0, Height/2, Width/2, Height/2);
-	glMatrixMode(GL_PROJECTION);
-	glLoadIdentity();
-	gluPerspective(45.0f, (GLfloat)Width / (GLfloat)Height, 0.1f, 100.0f);
-	glMatrixMode(GL_MODELVIEW);
-	glLoadIdentity();
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);	// Clear The Screen And The Depth Buffer
+	glLoadIdentity();	
 	glTranslatef(0.0f, 0.0f, -5.0f);
 	glRotatef(xrot, 1.0f, 0.0f, 0.0f);
 	glRotatef(yrot, 0.0f, 1.0f, 0.0f);
-	glRotatef(zrot, 0.0f, 0.0f, 1.0f);
+	//		1
+	glBlendFunc(GL_SRC_ALPHA, GL_ZERO);
+	glBindTexture(GL_TEXTURE_2D, 0);
+	glColor4f(0.0f, 1.0f, 0.0f, 0.5f);				
+	glBegin(GL_QUADS);
+	glTexCoord2f(0.0f, 0.0f); glVertex3f(-1.5f, -1.5f, 1.0f);
+	glTexCoord2f(1.0f, 0.0f); glVertex3f(0.0f, -1.5, 1.0f);
+	glTexCoord2f(1.0f, 1.0f); glVertex3f(0.0f, 0.0f, 1.0f);
+	glTexCoord2f(0.0f, 1.0f); glVertex3f(-1.5f, 0.0f, 1.0f);
+	glEnd();
+
+	//		2
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	glColor4f(1.0f, 1.0f, 1.0f , 0.5f );				
+	glBindTexture(GL_TEXTURE_2D, texture[2]);
+	glBegin(GL_QUADS);
+	glTexCoord2f(0.0f, 0.0f); glVertex3f(-1.0f, -1.0f, 1.0f);
+	glTexCoord2f(1.0f, 0.0f); glVertex3f(1.0f, -1.0f, 1.0f);
+	glTexCoord2f(1.0f, 1.0f); glVertex3f(1.0f, 1.0f, 1.0f);
+	glTexCoord2f(0.0f, 1.0f); glVertex3f(-1.0f, 1.0f, 1.0f);
+	glEnd();
+
+
+	//		3
+	glBindTexture(GL_TEXTURE_2D, 0);
+	glColor4f(1.0f, 1.0f, 0.0f, 0.5f);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);    //color blend mode : ONE(whole)
+	glBindTexture(GL_TEXTURE_2D, 0);
+	glColor4f(1.0f, 1.0f, 0.0f,0.5f);	
 
 	glBegin(GL_QUADS);
-	glVertex3f(-1.0f, -1.0f, 1.0f);
-	glVertex3f(1.0f, -1.0f, 1.0f);
-	glVertex3f(1.0f, 1.0f, 1.0f);
-	glVertex3f(-1.0f, 1.0f, 1.0f);
+
+	glTexCoord2f(0.0f, 0.0f); glVertex3f(0, 0, 1.0f);
+	glTexCoord2f(1.0f, 0.0f); glVertex3f(1.5f, 0, 1.0f);
+	glTexCoord2f(1.0f, 1.0f); glVertex3f(1.5f, 1.5, 1.0f);
+	glTexCoord2f(0.0f, 1.0f); glVertex3f(0, 1.5, 1.0f);
 	glEnd();
-	glColor3f(0.8, 0.7, 0.2);
-	glBegin(GL_TRIANGLES);
-	glVertex3f(0.0f, 1.0f, -1.0f);
-	glVertex3f(-1.0f, -1.0f, -1.0f);
-	glVertex3f(1.0f, -1.0f, -1.0f);
-
-	glVertex3f(-1.0f, 1.0f, 0.0f);
-	glVertex3f(-1.0f, -1.0f, -1.0f);
-	glVertex3f(-1.0f, -1.0f, 1.0f);
-	glEnd();
-	//定义在右下角的区域
-	glColor3f(1.0, 1.0, 1.0);
-	glViewport(200, 0, 200, 200);
-	glBegin(GL_POLYGON);
-	glVertex2f(-0.5, -0.5);
-	glVertex2f(-0.5, 0.5);
-	glVertex2f(0.5, 0.5);
-	glVertex2f(0.5, -0.5);
 
 
-	//定义左下角区域
-	glColor3f(0.0, 1.0, 0.0);
-	glViewport(0, 0, 200, 200);
-	glMatrixMode(GL_PROJECTION);								// Select The Projection Matrix
-	glLoadIdentity();											// Reset The Projection Matrix
-	// Set Up Perspective Mode To Fit 1/4 The Screen (Size Of A Viewport)
-	gluPerspective(45.0, 1, 0.1f, 500.0);
-	glMatrixMode(GL_MODELVIEW);									// Select The Modelview Matrix
-	glLoadIdentity();
-	glTranslatef(0.0f, 0.0f, -14.0f);								// Move 14 Units Into The Screen
-	gluSphere(quadric, 4.0f, 32, 32);								// Draw A Sphere
-
-	//定义右上角区域
-	glViewport(200, 200, 200, 200);
-	glMatrixMode(GL_PROJECTION);						// 选择投影矩阵
-	glLoadIdentity();							// 重置投影矩阵
-	gluPerspective(45.0f, 1, 0.1f, 100.0f);
-	glColor3f(0.0, 0.0, 1.0);
-	glMatrixMode(GL_MODELVIEW);						// 选择模型观察矩阵
-	glLoadIdentity();
-	glTranslatef(0.0f, 0.0f, -7.0f);				// 移入屏幕
-	glBegin(GL_QUADS);					// 开始绘制
-	glColor3f(1.0f, 1.0f, 1.0f);
-	glVertex3f(1.0f, 1.0f, 0.0f);
-	glVertex3f(0.0f, 1.0f, 0.0f);
-	glVertex3f(0.0f, 0.8f, 0.0f);
-	glVertex3f(1.0f, 0.8f, 0.0f);
-	glEnd();
 	
-	xrot += xspeed;
-	yrot += yspeed;
-	zrot += zspeed;
 	return true;
 }
 
