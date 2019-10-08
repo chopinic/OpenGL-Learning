@@ -203,35 +203,35 @@ bool display()
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);	// Clear The Screen And The Depth Buffer
 	glLoadIdentity();	
 	glTranslatef(0.0f, 0.0f, -5.0f);
-	glRotatef(xrot, 1.0f, 0.0f, 0.0f);
-	glRotatef(yrot, 0.0f, 1.0f, 0.0f);
-	//		1
-	glBlendFunc(GL_SRC_ALPHA, GL_ZERO);
-	glBindTexture(GL_TEXTURE_2D, 0);
-	glColor4f(0.0f, 1.0f, 0.0f, 0.5f);				
-	glBegin(GL_QUADS);
-	glTexCoord2f(0.0f, 0.0f); glVertex3f(-1.5f, -1.5f, 1.0f);
-	glTexCoord2f(1.0f, 0.0f); glVertex3f(0.0f, -1.5, 1.0f);
-	glTexCoord2f(1.0f, 1.0f); glVertex3f(0.0f, 0.0f, 1.0f);
-	glTexCoord2f(0.0f, 1.0f); glVertex3f(-1.5f, 0.0f, 1.0f);
-	glEnd();
+	//glRotatef(xrot, 1.0f, 0.0f, 0.0f);
+	//glRotatef(yrot, 0.0f, 1.0f, 0.0f);
+	////		1
+	//glBlendFunc(GL_SRC_ALPHA, GL_ZERO);
+	//glBindTexture(GL_TEXTURE_2D, 0);
+	//glColor4f(0.0f, 1.0f, 0.0f, 0.5f);				
+	//glBegin(GL_QUADS);
+	//glTexCoord2f(0.0f, 0.0f); glVertex3f(-1.5f, -1.5f, 1.0f);
+	//glTexCoord2f(1.0f, 0.0f); glVertex3f(0.0f, -1.5, 1.0f);
+	//glTexCoord2f(1.0f, 1.0f); glVertex3f(0.0f, 0.0f, 1.0f);
+	//glTexCoord2f(0.0f, 1.0f); glVertex3f(-1.5f, 0.0f, 1.0f);
+	//glEnd();
 
-	//		2
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-	glColor4f(1.0f, 1.0f, 1.0f , 0.5f );				
-	glBindTexture(GL_TEXTURE_2D, texture[2]);
-	glBegin(GL_QUADS);
-	glTexCoord2f(0.0f, 0.0f); glVertex3f(-1.0f, -1.0f, 1.0f);
-	glTexCoord2f(1.0f, 0.0f); glVertex3f(1.0f, -1.0f, 1.0f);
-	glTexCoord2f(1.0f, 1.0f); glVertex3f(1.0f, 1.0f, 1.0f);
-	glTexCoord2f(0.0f, 1.0f); glVertex3f(-1.0f, 1.0f, 1.0f);
-	glEnd();
+	////		2
+	//glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	//glColor4f(1.0f, 1.0f, 1.0f , 0.5f );				
+	//glBindTexture(GL_TEXTURE_2D, texture[2]);
+	//glBegin(GL_QUADS);
+	//glTexCoord2f(0.0f, 0.0f); glVertex3f(-1.0f, -1.0f, 1.0f);
+	//glTexCoord2f(1.0f, 0.0f); glVertex3f(1.0f, -1.0f, 1.0f);
+	//glTexCoord2f(1.0f, 1.0f); glVertex3f(1.0f, 1.0f, 1.0f);
+	//glTexCoord2f(0.0f, 1.0f); glVertex3f(-1.0f, 1.0f, 1.0f);
+	//glEnd();
 
 
 	//		3
-	glBindTexture(GL_TEXTURE_2D, 0);
+	//glBindTexture(GL_TEXTURE_2D, 0);
 	glColor4f(1.0f, 1.0f, 0.0f, 0.5f);
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);    //color blend mode : ONE(whole)
+	//glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);    //color blend mode : ONE(whole)
 	glBindTexture(GL_TEXTURE_2D, 0);
 	glColor4f(1.0f, 1.0f, 0.0f,0.5f);	
 
